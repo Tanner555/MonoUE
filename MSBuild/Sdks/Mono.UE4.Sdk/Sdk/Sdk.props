@@ -1,0 +1,16 @@
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.props" />
+
+  <PropertyGroup>
+    <UE4GameLocation>$(SolutionDir)</UE4GameLocation>
+    <MonoUEAssemblyKind>GameAssembly</MonoUEAssemblyKind>
+  </PropertyGroup>
+
+  <Import Project="$(MSBuildThisFileDirectory)..\..\..\MonoUE.Core.props" />
+
+  <!-- automatically reference all UE binding assemblies -->
+  <Import Project="$(UE4EngineAssembliesPath)\..\Mono\UnrealEngine.Runtime.props" Condition="Exists('$(UE4EngineAssembliesPath)\..\Mono\UnrealEngine.Runtime.props')"/>
+  <Import Project="$(UE4GameAssembliesPath)\..\Mono\UnrealEngine.Runtime.props"   Condition="$(UE4GameAssembliesPath) != '' And Exists('$(UE4GameAssembliesPath)\..\Mono\UnrealEngine.Runtime.props')" /> 
+
+</Project>

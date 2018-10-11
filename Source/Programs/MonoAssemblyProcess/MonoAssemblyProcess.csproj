@@ -1,0 +1,80 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{80A94262-9D8B-4070-98A4-2389D48E066B}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>MonoAssemblyProcess</RootNamespace>
+    <AssemblyName>MonoAssemblyProcess</AssemblyName>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\..\..\Binaries\DotNET</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\..\..\Binaries\DotNET</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Security" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <PackageReference Include="fastJSON" Version="2.1.33" />
+    <PackageReference Include="Microsoft.Build.Utilities.Core">
+      <Version>15.7.179</Version>
+    </PackageReference>
+    <PackageReference Include="Mono.Cecil" Version="0.10.0" />
+    <PackageReference Include="NDesk.Options" Version="0.2.1" />
+    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\..\..\Managed\MonoBindings\ClassFlags.cs">
+      <Link>ClassFlags.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\Managed\MonoBindings\FunctionFlags.cs">
+      <Link>FunctionFlags.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\Managed\MonoBindings\LifetimeCondition.cs">
+      <Link>LifetimeCondition.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\Managed\MonoBindings\PropertyFlags.cs">
+      <Link>PropertyFlags.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\Managed\MonoBindings\StructFlags.cs">
+      <Link>StructFlags.cs</Link>
+    </Compile>
+    <Compile Include="AssemblyMetadata.cs" />
+    <Compile Include="ErrorEmitter.cs" />
+    <Compile Include="Exceptions.cs" />
+    <Compile Include="Rewriter.cs" />
+    <Compile Include="RewriteHelper.cs" />
+    <Compile Include="UnrealTypes.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

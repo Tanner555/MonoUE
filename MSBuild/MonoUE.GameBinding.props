@@ -1,0 +1,8 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" />
+  <PropertyGroup>
+    <MonoUEAssemblyKind>GameBinding</MonoUEAssemblyKind>
+    <UE4GameLocation>$(MSBuildProjectDirectory)\..\..\..\..\..\..</UE4GameLocation>
+  </PropertyGroup>
+  <Import Project="MonoUE.Core.props" />
+</Project>

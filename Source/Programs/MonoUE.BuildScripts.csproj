@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!--
+
+  THIS IS A DUMMY PROJECT SO THAT VISUAL STUDIO CAN PROVIDE INTELLISENSE FOR THE BUILD FILES.
+  THIS FILE IS NOT USED FOR BUILDING THE BUILD FILES. THEY ARE BUILT BY UBT.
+
+  -->
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{529F86DB-5389-4D3B-B628-D9394A9626F4}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>MonoUE.BuildScripts</AppDesignerFolder>
+    <RootNamespace>MonoUE.BuildScripts</RootNamespace>
+    <AssemblyName>MonoUE.BuildScripts</AssemblyName>
+    <FileAlignment>512</FileAlignment>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <OutputPath>tmp</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <ProjectReference Include="..\..\..\..\Source\Programs\UnrealBuildTool\UnrealBuildTool.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\MonoRuntime\MonoRuntime.Build.cs" />
+    <Compile Include="..\MonoEditor\MonoEditor.Build.cs" />
+    <Compile Include="..\MonoScriptGenerator\MonoScriptGenerator.Build.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Target Name="Build" />
+  <Target Name="Clean" />
+</Project>

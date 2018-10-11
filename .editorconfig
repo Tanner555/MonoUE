@@ -1,0 +1,9 @@
+# EditorConfig is awesome:http://EditorConfig.org
+
+# Rest of UE uses tabs for C#, but we have mostly spaces, so keep it consistent
+[*.cs]
+indent_style = space
+indent_size = 4
+
+[*.Build.cs]
+indent_style = tab

@@ -1,0 +1,118 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildThisFileDirectory)..\..\MSBuild\MonoUE.EngineBinding.props" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{AAF31D90-8D6A-4367-B6FA-661F573DA066}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>UnrealEngine.Runtime</RootNamespace>
+    <AssemblyName>UnrealEngine.Runtime</AssemblyName>
+    <FileAlignment>512</FileAlignment>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DefineConstants>$(UE4Define);CLSCOMPLIANT</DefineConstants>
+    <OutputPath>$(UE4OutputPath)</OutputPath>
+    <AddSyntheticProjectReferencesForSolutionDependencies>false</AddSyntheticProjectReferencesForSolutionDependencies>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CustomCommands>
+      <CustomCommands>
+        <Command type="Execute" command="..\..\..\Binaries\Win64\UE4Editor.exe -Log" workingdir="..\..\..\Binaries\Win64" />
+      </CustomCommands>
+    </CustomCommands>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Bindings.cs" />
+    <Compile Include="CategoryAttribute.cs" />
+    <Compile Include="ClassFlags.cs" />
+    <Compile Include="ConstructorHelpers.cs" />
+    <Compile Include="FunctionFlags.cs" />
+    <Compile Include="Key.cs" />
+    <Compile Include="LifetimeCondition.cs" />
+    <Compile Include="MarshalingUtil.cs" />
+    <Compile Include="MathEnums.cs" />
+    <Compile Include="Name.cs" />
+    <Compile Include="Math\BezierCurve.cs" />
+    <Compile Include="Math\BezierCurveCubic.cs" />
+    <Compile Include="Math\BezierCurveQuadric.cs" />
+    <Compile Include="Math\Box2.cs" />
+    <Compile Include="Math\Functions.cs" />
+    <Compile Include="Math\Half.cs" />
+    <Compile Include="Math\MathHelper.cs" />
+    <Compile Include="Math\Matrix3.cs" />
+    <Compile Include="Math\Matrix3d.cs" />
+    <Compile Include="Math\Matrix4.cs" />
+    <Compile Include="Math\Matrix4d.cs" />
+    <Compile Include="Math\Quaternion.cs" />
+    <Compile Include="Math\Quaterniond.cs" />
+    <Compile Include="Math\Vector2.cs" />
+    <Compile Include="Math\Vector2d.cs" />
+    <Compile Include="Math\Vector2h.cs" />
+    <Compile Include="Math\Vector3.cs" />
+    <Compile Include="Math\Vector3d.cs" />
+    <Compile Include="Math\Vector3h.cs" />
+    <Compile Include="Math\Vector4.cs" />
+    <Compile Include="Math\Vector4d.cs" />
+    <Compile Include="Math\Vector4h.cs" />
+    <Compile Include="ObjectFlags.cs" />
+    <Compile Include="OpenTKExtensions.cs" />
+    <Compile Include="ObjectInitializer.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="LogTextWriter.cs" />
+    <Compile Include="PropertyFlags.cs" />
+    <Compile Include="RandomStream.cs" />
+    <Compile Include="Rotator.cs" />
+    <Compile Include="SharedPtr.cs" />
+    <Compile Include="FixedSizeArray.cs" />
+    <Compile Include="StructFlags.cs" />
+    <Compile Include="SubclassOf.cs" />
+    <Compile Include="Subobject.cs" />
+    <Compile Include="Text.cs" />
+    <Compile Include="UClassAttribute.cs" />
+    <Compile Include="UEnumAttribute.cs" />
+    <Compile Include="UFunctionAttribute.cs" />
+    <Compile Include="UMetaDataAttribute.cs" />
+    <Compile Include="UnrealArray.cs" />
+    <Compile Include="UnrealInterop.cs" />
+    <Compile Include="UnrealObject.cs" />
+    <Compile Include="UnrealString.cs" />
+    <Compile Include="UPropertyAttribute.cs" />
+    <Compile Include="UStructAttribute.cs" />
+    <Compile Include="WeakObject.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\Source\MonoRuntime\Private\RegisterPInvokes.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>RegisterPInvokes.cpp</LastGenOutput>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\..\Source\MonoRuntime\Private\RegisterPInvokes.cpp">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>RegisterPInvokes.tt</DependentUpon>
+    </Content>
+  </ItemGroup>
+  <Import Project="$(MonoUEMSBuildDir)MonoUE.CSharp.targets" />
+</Project>

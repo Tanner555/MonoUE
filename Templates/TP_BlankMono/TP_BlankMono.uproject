@@ -1,0 +1,14 @@
+{
+	"FileVersion": 3,
+	"EngineVersion": "1616732",
+	"PackageFileUE4Version": "231",
+	"PackageFileLicenseeUE4Version": "0",
+	"Modules": [
+		{
+			"Name": "TP_BlankMono",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	],
+	"EngineAssociation": "{F37F9245-485A-E1E4-031C-ACBD17B121E7}"
+}

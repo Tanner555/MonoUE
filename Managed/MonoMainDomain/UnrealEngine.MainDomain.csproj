@@ -1,0 +1,78 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildThisFileDirectory)..\..\MSBuild\MonoUE.EngineBinding.props" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{921EFBCE-D0EA-47C2-B379-5D96E2EEF42E}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>UnrealEngine.MainDomain</RootNamespace>
+    <AssemblyName>UnrealEngine.MainDomain</AssemblyName>
+    <FileAlignment>512</FileAlignment>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <DefineConstants>$(UE4Define);CLSCOMPLIANT</DefineConstants>
+    <OutputPath>$(UE4OutputPath)</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\MonoBindings\LogTextWriter.cs">
+      <Link>LogTextWriter.cs</Link>
+    </Compile>
+    <Compile Include="MainDomain.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="..\..\Source\Programs\MonoUE.IdeAgent\IUnrealAgentLogger.cs" Link="IUnrealAgentLogger.cs" />
+    <Compile Include="..\..\Source\Programs\MonoUE.IdeAgent\ProcessArgumentBuilder.cs" Link="ProcessArgumentBuilder.cs" />
+    <Compile Include="..\..\Source\Programs\MonoUE.IdeAgent\UnrealAgent.cs" Link="UnrealAgent.cs" />
+    <Compile Include="..\..\Source\Programs\MonoUE.IdeAgent\UnrealAgentConnection.cs" Link="UnrealAgentConnection.cs" />
+    <Compile Include="..\..\Source\Programs\MonoUE.IdeAgent\UnrealAgentHelper.cs" Link="UnrealAgentHelper.cs" />
+    <Compile Include="UnrealAgentServer.cs" />
+    <Compile Include="UnrealEditorLog.cs" />
+    <Compile Include="FEditorDelegates.cs">
+      <DependentUpon>FEditorDelegates.tt</DependentUpon>
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <Compile Include="VisualStudioHelper.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="FEditorDelegates.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>FEditorDelegates.cs</LastGenOutput>
+    </None>
+    <None Include="..\..\Source\MonoEditor\Private\MonoEditorGlue.tt">
+      <Link>MonoEditorGlue.tt</Link>
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>MonoEditorGlue.cpp</LastGenOutput>
+    </None>
+    <None Include="..\..\Source\MonoEditor\Private\MonoEditorGlue.cpp">
+      <DependentUpon>MonoEditorGlue.tt</DependentUpon>
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+  </ItemGroup>
+  <Import Project="$(MonoUEMSBuildDir)MonoUE.CSharp.targets" />
+</Project>

@@ -1,0 +1,15 @@
+%COPYRIGHT_LINE%
+using System;
+using UnrealEngine.Runtime;
+using UnrealEngine.Engine;
+
+namespace %MONO_PROJECT_NAMESPACE%
+{
+	public class %UNPREFIXED_CLASS_NAME%
+	{
+		public %UNPREFIXED_CLASS_NAME%()
+		{
+
+		}
+	}
+}

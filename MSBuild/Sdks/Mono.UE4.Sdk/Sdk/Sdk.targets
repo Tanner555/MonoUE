@@ -1,0 +1,11 @@
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <Import Project="$(MonoUEMSBuildDir)MonoUE.BeforeCommon.targets" />
+
+  <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.targets" />
+
+  <Import Project="$(MonoUEMSBuildDir)MonoUE.Common.targets" />
+
+  <Import Project="$(MonoUEMSBuildDir)MonoUE.AfterCommon.CSharp.targets" Condition="'$(Language)'=='C#'" />
+
+</Project>

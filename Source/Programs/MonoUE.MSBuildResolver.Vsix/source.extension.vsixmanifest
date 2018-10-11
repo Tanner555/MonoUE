@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
+    <Metadata>
+        <Identity Id="MonoUE.MSBuildResolver.Vsix.f00f5594-f014-4d69-9648-888a28504aff" Version="1.0.2" Language="en-US" Publisher="Mikayla Hutchinson" />
+        <DisplayName>MonoUE.MSBuildResolver</DisplayName>
+        <Description xml:space="preserve">MSBuild SDK Resolver for Mono for Unreal Engine.</Description>
+        <MoreInfo>https://mono-ue.github.io</MoreInfo>
+    </Metadata>
+    <Installation AllUsers="true">
+        <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[15.0.26621.2,16.0)" />
+    </Installation>
+    <Dependencies>
+    </Dependencies>
+    <Prerequisites>
+        <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[15.0,16.0)" DisplayName="Visual Studio core editor" />
+        <Prerequisite Id="Microsoft.VisualStudio.Component.NuGet" Version="[15.0,16.0)" DisplayName="NuGet package manager" />
+        <Prerequisite Id="Microsoft.VisualStudio.Component.Roslyn.LanguageServices" Version="[15.0,16.0)" DisplayName="C# and Visual Basic" />
+        <Prerequisite Id="Microsoft.NetCore.ComponentGroup.DevelopmentTools" Version="[15.0.26621.2,16.0)" DisplayName=".NET Core 2.0 development tools" />
+    </Prerequisites>
+</PackageManifest>

@@ -1,0 +1,7 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" />
+  <PropertyGroup>
+    <MonoUEAssemblyKind>EngineBinding</MonoUEAssemblyKind>
+  </PropertyGroup>
+  <Import Project="MonoUE.Core.props" />
+</Project>

@@ -1,0 +1,91 @@
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<!--
+Copyright 2014 Xamarin Inc.
+For details, see LICENSE.txt.
+-->
+  <UsingTask TaskName="GenerateInputIniHelpers" AssemblyFile="$(MonoUEBuildBinariesDir)MonoUE.Tasks.dll" />
+
+  <ItemGroup>
+    <ProjectCapability Include="MonoUE" />
+    <ProjectCapability Remove="LaunchProfiles" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <!-- force portable PDB so Mono can read the symbols -->
+    <DebugType Condition="'$(DebugSymbols)'=='True' or ('$(DebugSymbols)'=='' And '$(ConfigurationName)'=='Debug')">portable</DebugType>
+    <DebugType Condition="'$(DebugType)'!='' And '$(DebugType)'!='portable'">portable</DebugType>
+    <Deterministic>True</Deterministic>
+    <DocumentationFile Condition="'$(SuppressDocs)'!='True'">$(OutputPath)$(AssemblyName).xml</DocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <_MonoUEIsBindingAssembly>False</_MonoUEIsBindingAssembly>
+    <_MonoUEIsBindingAssembly Condition="'$(MonoUEAssemblyKind)'=='EngineBinding' Or '$(MonoUEAssemblyKind)'=='GameBinding'">True</_MonoUEIsBindingAssembly>
+    <_MonoUEIsGame>False</_MonoUEIsGame>
+    <_MonoUEIsGame Condition="'$(MonoUEAssemblyKind)'=='GameBinding' Or '$(MonoUEAssemblyKind)'=='GameAssembly'">True</_MonoUEIsGame>
+  </PropertyGroup>
+
+  <Target Name="MonoUE4CheckConfig" BeforeTargets="PrepareForBuild" Condition="'$(_MonoUEIsGame)' == 'True'">
+    <Error
+      Condition="!Exists('$(UE4EngineAssembliesPath)\UnrealEngine.Runtime.dll')"
+      Text="Engine binaries not found for active configuration and platform '$(Configuration)|$(Platform)'.
+Please ensure you have built the engine for this configuration and platform, or change the active configuration or platform for your current solution."
+    />
+    <Error
+      Condition="'$(UE4GameLocation)'==''"
+      Text="When building MonoUE projects outside of a solution, you must set UE4GameLocation to the uproject directory."
+    />
+  </Target>
+
+  <PropertyGroup Condition="'$(_MonoUEIsBindingAssembly)'=='False'">
+    <MonoUE4AssemblyProcessExe Condition="$(MonoUE4AssemblyProcessExe) == ''">$(MonoUEBuildBinariesDir)MonoAssemblyProcess.exe</MonoUE4AssemblyProcessExe>
+    <_MonoUE4AssemblyProcessGameAssembliesOption Condition="$(UE4GameAssembliesPath) != ''">-p="$(UE4GameAssembliesPath)" </_MonoUE4AssemblyProcessGameAssembliesOption>
+    <_MonoUE4AssemblyProcessCommand>"$(MonoUE4AssemblyProcessExe)" -p="$(UE4EngineAssembliesPath)" $(_MonoUE4AssemblyProcessGameAssembliesOption) -n=UnrealEngine</_MonoUE4AssemblyProcessCommand>
+    <_MonoUE4AssemblyProcessCommand Condition="$(OS) == 'Unix'">mono $(_MonoUE4AssemblyProcessCommand)</_MonoUE4AssemblyProcessCommand>
+    <_MonoUE4IntermediateDir>$(IntermediateOutputPath)MonoUE4</_MonoUE4IntermediateDir>
+    <_MonoUE4IntermediateAsm>$(_MonoUE4IntermediateDir)\$(TargetName)$(TargetExt)</_MonoUE4IntermediateAsm>
+    <_MonoUE4IntermediatePdb>$(_MonoUE4IntermediateDir)\$(TargetName).pdb</_MonoUE4IntermediatePdb>
+    <_MonoUE4IntermediateJson>$(_MonoUE4IntermediateDir)\$(TargetName).json</_MonoUE4IntermediateJson>
+  </PropertyGroup>
+
+  <Target Name="_AssemblyProcess"
+          Inputs="@(IntermediateAssembly);$(MonoUE4AssemblyProcessExe);$(MSBuildThisFileFullPath)"
+          Outputs="$(_MonoUE4IntermediateAsm)">
+    <PropertyGroup>
+      <_AssemblyProcessArgs Condition="'$(MonoUE4AssemblyProcessVerify)'=='true'">/verify</_AssemblyProcessArgs>
+    </PropertyGroup>
+    <Exec
+      Command="$(_MonoUE4AssemblyProcessCommand) -p=&quot;$(FrameworkPathOverride)&quot; $(AssemblyProcessArgs) -o &quot;$(_MonoUE4IntermediateDir)&quot; &quot;@(IntermediateAssembly)&quot;"
+      IgnoreExitCode ="false" />
+  </Target>
+
+  <Target Name="_MonoUE4AssemblyCollectOutput"
+          AfterTargets="_CheckForCompileOutputs"
+          DependsOnTargets="_AssemblyProcess"
+          Condition="'$(_MonoUEIsBindingAssembly)' == 'False' And Exists('$(_MonoUE4IntermediateAsm)')">
+    <ItemGroup Condition="Exists('@(IntermediateAssembly)')">
+      <FileWrites Include="$(_MonoUE4IntermediateAsm)" />
+      <IntermediateAssembly Remove="@(IntermediateAssembly)" />
+      <IntermediateAssembly Include="$(_MonoUE4IntermediateAsm)" />
+    </ItemGroup>
+    <ItemGroup Condition="'$(_DebugSymbolsProduced)'== 'True'">
+      <_DebugSymbolsIntermediatePath Remove="@(_DebugSymbolsIntermediatePath)" />
+      <_DebugSymbolsIntermediatePath Include="$(_MonoUE4IntermediatePdb)" />
+      <FileWrites Include="$(_MonoUE4IntermediatePdb)"/>
+    </ItemGroup>
+  </Target>
+
+  <Target Name="_MonoUE4AssemblyCollectManifest"
+          BeforeTargets="GetCopyToOutputDirectoryItems"
+          DependsOnTargets="_AssemblyProcess"
+          Condition="'$(_MonoUEIsBindingAssembly)' == 'False'">
+    <ItemGroup Condition="Exists('$(_MonoUE4IntermediateJson)')">
+      <_NoneWithTargetPath
+        Include="$(_MonoUE4IntermediateJson)"
+        TargetPath="$(TargetName).json"
+        CopyToOutputDirectory="PreserveNewest" />
+      <FileWrites Include="$(_MonoUE4IntermediateJson)"/>
+    </ItemGroup>
+  </Target>
+</Project>

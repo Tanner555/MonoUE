@@ -1,0 +1,276 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <MonoUEPluginDir>$(MSBuildThisFileDirectory)..\</MonoUEPluginDir>
+    <MonoUEMSBuildDir>$(MSBuildThisFileDirectory)</MonoUEMSBuildDir>
+    <MonoUEBuildBinariesDir>$(MSBuildThisFileDirectory)..\Binaries\DotNet\</MonoUEBuildBinariesDir>
+    <UERootDir>$(MonoUEPluginDir)..\..\..\</UERootDir>
+  </PropertyGroup>
+
+  <!--
+  Register configurations so Visual Studio will respect solution configuration mappings.
+  The Roslyn project system only supports these properties. It doesn't appear to allow
+  seeting which combinations are valid.
+  -->
+  <PropertyGroup>
+    <Configurations>Debug Client;Debug Editor;Debug Server;Debug;DebugGame Client;DebugGame Editor;DebugGame Server;DebugGame;Development Client;Development Editor;Development Server;Development;Shipping Client;Shipping Server;Shipping;Test Client;Test Server;Test</Configurations>
+    <Platforms>Win64;Win32;Mac</Platforms>
+  </PropertyGroup>
+
+  <!--
+  If platform not set, use host platform, so we don't end up with junk values
+  in derived variables. Since it's set as a global property, it can't be changed,
+  so use new UE4Platform variable.
+  -->
+  <Choose>
+    <When Condition="'$(Platform)' !='' And '$(Platform)'!='AnyCPU'">
+      <PropertyGroup>
+        <UE4Platform>$(Platform)</UE4Platform>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(OS)' != 'Unix'">
+      <PropertyGroup>
+        <UE4Platform>Win64</UE4Platform>
+      </PropertyGroup>
+    </When>
+    <Otherwise>
+      <PropertyGroup>
+        <UE4Platform>Mac</UE4Platform>
+      </PropertyGroup>
+    </Otherwise>
+    <!-- TODO Linux -->
+  </Choose>
+
+  <!-- ensure a valid configuration if not provided -->
+  <PropertyGroup Condition="'$(Configuration)'==''">
+    <Configuration>Development Editor</Configuration>
+  </PropertyGroup>
+
+  <!-- compute the UBT target and config from sln config -->
+  <Choose>
+    <When Condition="'$(Configuration)'=='Debug Client'">
+      <PropertyGroup>
+        <UE4Target>Client</UE4Target>
+        <UE4Config>Debug</UE4Config>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(Configuration)'=='Debug Editor'">
+      <PropertyGroup>
+        <UE4Target>Editor</UE4Target>
+        <UE4Config>Debug</UE4Config>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(Configuration)'=='Debug Server'">
+      <PropertyGroup>
+        <UE4Target>Server</UE4Target>
+        <UE4Config>Debug</UE4Config>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(Configuration)'=='Debug'">
+      <PropertyGroup>
+        <UE4Target>Game</UE4Target>
+        <UE4Config>Debug</UE4Config>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(Configuration)'=='DebugGame Client'">
+      <PropertyGroup>
+        <UE4Target>Client</UE4Target>
+        <UE4Config>DebugGame</UE4Config>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(Configuration)'=='DebugGame Editor'">
+      <PropertyGroup>
+        <UE4Target>Editor</UE4Target>
+        <UE4Config>DebugGame</UE4Config>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(Configuration)'=='DebugGame Server'">
+      <PropertyGroup>
+        <UE4Target>Server</UE4Target>
+        <UE4Config>DebugGame</UE4Config>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(Configuration)'=='DebugGame'">
+      <PropertyGroup>
+        <UE4Target>Game</UE4Target>
+        <UE4Config>DebugGame</UE4Config>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(Configuration)'=='Development Client'">
+      <PropertyGroup>
+        <UE4Target>Client</UE4Target>
+        <UE4Config>Development</UE4Config>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(Configuration)'=='Development Editor'">
+      <PropertyGroup>
+        <UE4Target>Editor</UE4Target>
+        <UE4Config>Development</UE4Config>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(Configuration)'=='Development Server'">
+      <PropertyGroup>
+        <UE4Target>Server</UE4Target>
+        <UE4Config>Development</UE4Config>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(Configuration)'=='Development'">
+      <PropertyGroup>
+        <UE4Target>Game</UE4Target>
+        <UE4Config>Development</UE4Config>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(Configuration)'=='Shipping Client'">
+      <PropertyGroup>
+        <UE4Target>Client</UE4Target>
+        <UE4Config>Shipping</UE4Config>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(Configuration)'=='Shipping Server'">
+      <PropertyGroup>
+        <UE4Target>Server</UE4Target>
+        <UE4Config>Shipping</UE4Config>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(Configuration)'=='Shipping'">
+      <PropertyGroup>
+        <UE4Target>Game</UE4Target>
+        <UE4Config>Shipping</UE4Config>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(Configuration)'=='Test Client'">
+      <PropertyGroup>
+        <UE4Target>Client</UE4Target>
+        <UE4Config>Test</UE4Config>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(Configuration)'=='Test Server'">
+      <PropertyGroup>
+        <UE4Target>Server</UE4Target>
+        <UE4Config>Test</UE4Config>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(Configuration)'=='Test'">
+      <PropertyGroup>
+        <UE4Target>Game</UE4Target>
+        <UE4Config>Test</UE4Config>
+      </PropertyGroup>
+    </When>
+    <!-- ensure sane values of some kind else we construct junk variables -->
+    <Otherwise>
+      <PropertyGroup>
+        <UE4Target>Game</UE4Target>
+        <UE4Config>Shipping</UE4Config>
+      </PropertyGroup>
+    </Otherwise>
+  </Choose>
+
+  <PropertyGroup>
+    <UE4Define>PLATFORM_$(UE4Platform.ToUpper())</UE4Define>
+  </PropertyGroup>
+
+  <!--
+  Compute output directory name for target and config
+  MUST BE IN SYNC: MonoUE.Core.props, MonoRuntime.Plugin.cs, MonoMainDomain.cpp, MonoRuntimeStagingRules.cs, MonoScriptCodeGenerator.cpp, and IDE extensions
+  -->
+
+  <Choose>
+    <When Condition="'$(UE4Target)'=='Client'">
+      <PropertyGroup>
+        <UE4MonoDirName>MonoClient</UE4MonoDirName>
+        <UE4Define>$(UE4Define);TARGET_CLIENT</UE4Define>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(UE4Target)'=='Editor'">
+      <PropertyGroup>
+        <UE4MonoDirName>MonoEditor</UE4MonoDirName>
+        <UE4Define>$(UE4Define);TARGET_EDITOR</UE4Define>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(UE4Target)'=='Server'">
+      <PropertyGroup>
+        <UE4MonoDirName>MonoServer</UE4MonoDirName>
+        <UE4Define>$(UE4Define);TARGET_SERVER</UE4Define>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(UE4Target)'=='Game'">
+      <PropertyGroup>
+        <UE4MonoDirName>Mono</UE4MonoDirName>
+        <UE4Define>$(UE4Define);TARGET_GAME</UE4Define>
+      </PropertyGroup>
+    </When>
+  </Choose>
+
+  <Choose>
+    <When Condition="'$(UE4Config)'=='Debug'">
+      <PropertyGroup>
+        <DebugSymbols>true</DebugSymbols>
+        <DebugType>full</DebugType>
+        <Optimize>false</Optimize>
+        <UE4MonoDirName>$(UE4MonoDirName)-Debug</UE4MonoDirName>
+        <UE4Define>$(UE4Define);CONFIG_DEBUG</UE4Define>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(UE4Config)'=='DebugGame'">
+      <PropertyGroup>
+        <DebugSymbols>true</DebugSymbols>
+        <DebugType>full</DebugType>
+        <Optimize>false</Optimize>
+        <UE4MonoDirName>$(UE4MonoDirName)-DebugGame</UE4MonoDirName>
+        <UE4Define>$(UE4Define);CONFIG_DEBUGGAME</UE4Define>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(UE4Config)'=='Development'">
+      <PropertyGroup>
+        <DebugSymbols>true</DebugSymbols>
+        <DebugType>full</DebugType>
+        <Optimize>false</Optimize>
+        <UE4Define>$(UE4Define);CONFIG_DEVELOPMENT</UE4Define>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(UE4Config)'=='Shipping'">
+      <PropertyGroup>
+        <DebugType>pdbonly</DebugType>
+        <Optimize>true</Optimize>
+        <UE4MonoDirName>$(UE4MonoDirName)-Shipping</UE4MonoDirName>
+        <UE4Define>$(UE4Define);CONFIG_SHIPPING</UE4Define>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(UE4Config)'=='Test'">
+      <PropertyGroup>
+        <DebugType>pdbonly</DebugType>
+        <Optimize>true</Optimize>
+        <UE4MonoDirName>$(UE4MonoDirName)-Test</UE4MonoDirName>
+        <UE4Define>$(UE4Define);CONFIG_TEST</UE4Define>
+      </PropertyGroup>
+    </When>
+  </Choose>
+
+  <!-- determine output paths -->
+  <PropertyGroup>
+    <UE4EngineAssembliesPath>$(MonoUEPluginDir)Binaries\$(UE4Platform)\$(UE4MonoDirName)</UE4EngineAssembliesPath>
+  </PropertyGroup>
+
+  <Choose>
+    <When Condition="'$(UE4GameLocation)'!=''">
+      <PropertyGroup>
+        <UE4GameLocation Condition="!HasTrailingSlash('$(UE4GameLocation)')">$(UE4GameLocation)\</UE4GameLocation>
+        <UE4GameAssembliesPath>$(UE4GameLocation)Binaries\$(UE4Platform)\$(UE4MonoDirName)</UE4GameAssembliesPath>
+        <UE4OutputPath>$(UE4GameAssembliesPath)</UE4OutputPath>
+      </PropertyGroup>
+    </When>
+    <Otherwise>
+      <PropertyGroup>
+        <UE4OutputPath>$(UE4EngineAssembliesPath)</UE4OutputPath>
+      </PropertyGroup>
+    </Otherwise>
+  </Choose>
+
+  <!-- set up the target framework -->
+  <PropertyGroup>
+    <TargetFrameworkIdentifier>MonoUE</TargetFrameworkIdentifier>
+    <TargetFrameworkVersion>v1.0</TargetFrameworkVersion>
+    <TargetFrameworkRootPath>$([System.IO.Path]::GetFullPath('$(MonoUEPluginDir)ThirdParty\mono\fx'))</TargetFrameworkRootPath>
+    <FrameworkPathOverride>$(TargetFrameworkRootPath)\$(TargetFrameworkIdentifier)\$(TargetFrameworkVersion)</FrameworkPathOverride>
+  </PropertyGroup>
+</Project>

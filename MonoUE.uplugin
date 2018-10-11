@@ -1,0 +1,55 @@
+{
+  "FileVersion": 3,
+  "FriendlyName": "Mono for Unreal Engine",
+  "Version": 1,
+  "VersionName": "1.0",
+  "CreatedBy": "Microsoft Corp.",
+  "CreatedByURL": "https://mono-ue.github.io",
+  "EngineVersion": "4.20.0",
+  "Description": "Mono scripting runtime",
+  "Category": "Scripting",
+  "EnabledByDefault": true,
+  "CanBeUsedWithUnrealHeaderTool": true,
+  "Modules":
+  [
+    {
+      "Name": "MonoScriptGenerator",
+      "Type": "Program",
+      "LoadingPhase": "PostConfigInit"
+    },
+    {
+      "Name": "MonoRuntime",
+      "Type": "Runtime",
+      "LoadingPhase": "PostDefault"
+    },
+    {
+      "Name": "MonoEditor",
+      "Type": "Editor",
+      "LoadingPhase": "PostDefault"
+    }
+  ],
+  "PostBuildSteps": {
+    "Win64": [
+      "\"$(PluginDir)\\Binaries\\DotNET\\MonoUEBuildTool.exe\" Build -EngineDir \"$(EngineDir)\" -ProjectDir \"$(ProjectDir)\" -TargetName \"$(TargetName)\" -TargetPlatform \"$(TargetPlatform)\" -TargetConfiguration \"$(TargetConfiguration)\" -TargetType \"$(TargetType)\" -ProjectFile \"$(ProjectFile)\" -PluginDir \"$(PluginDir)\" -AppName \"$(AppName)\" -PlatformIntermediateDir \"$(PlatformIntermediateDir)\""
+    ],
+    "Mac": [
+      "\"$(PluginDir)/MSBuild/mac-mono.sh\" \"$(PluginDir)/Binaries/DotNET/MonoUEBuildTool.exe\" Build -EngineDir \"$(EngineDir)\" -ProjectDir \"$(ProjectDir)\" -TargetName \"$(TargetName)\" -TargetPlatform \"$(TargetPlatform)\" -TargetConfiguration \"$(TargetConfiguration)\" -TargetType \"$(TargetType)\" -ProjectFile \"$(ProjectFile)\" -PluginDir \"$(PluginDir)\" -AppName \"$(AppName)\" -PlatformIntermediateDir \"$(PlatformIntermediateDir)\""
+    ]
+  },
+  "PostCleanSteps": {
+    "Win64": [
+      "\"$(PluginDir)\\Binaries\\DotNET\\MonoUEBuildTool.exe\" Clean -EngineDir \"$(EngineDir)\" -ProjectDir \"$(ProjectDir)\" -TargetName \"$(TargetName)\" -TargetPlatform \"$(TargetPlatform)\" -TargetConfiguration \"$(TargetConfiguration)\" -TargetType \"$(TargetType)\" -ProjectFile \"$(ProjectFile)\" -PluginDir \"$(PluginDir)\" -AppName \"$(AppName)\" -PlatformIntermediateDir \"$(PlatformIntermediateDir)\""
+    ],
+    "Mac": [
+      "\"$(PluginDir)/MSBuild/mac-mono.sh\" \"$(PluginDir)/Binaries/DotNET/MonoUEBuildTool.exe\" Clean -EngineDir \"$(EngineDir)\" -ProjectDir \"$(ProjectDir)\" -TargetName \"$(TargetName)\" -TargetPlatform \"$(TargetPlatform)\" -TargetConfiguration \"$(TargetConfiguration)\" -TargetType \"$(TargetType)\" -ProjectFile \"$(ProjectFile)\" -PluginDir \"$(PluginDir)\" -AppName \"$(AppName)\" -PlatformIntermediateDir \"$(PlatformIntermediateDir)\""
+    ]
+  },
+  "PostGenerateProjectFilesSteps": {
+    "Win64": [
+      "\"$(PluginDir)\\Binaries\\DotNET\\MonoUEBuildTool.exe\" GenerateProjects -SolutionDir \"$(ProjectDir)\" -SolutionName \"$(AppName)\" \"$(ProjectFile)\""
+    ],
+    "Mac": [
+      "\"$(PluginDir)/MSBuild/mac-mono.sh\" \"$(PluginDir)/Binaries/DotNET/MonoUEBuildTool.exe\" GenerateProjects -SolutionDir \"$(ProjectDir)\" -SolutionName \"$(AppName)\" \"$(ProjectFile)\""
+    ]
+  }
+}

@@ -50,6 +50,9 @@ public:
 	virtual FString GetMonoClassName(const UClass* InClass, bool bExcludeBindings = false) const override;
 	virtual FString GetMonoClassNamespace(const UClass* InClass, bool bExcludeBindings = false) const override;
 	virtual bool AddDllMapForModule(const char* DllName, const FName ModuleName) const override;
+#if MONOUE_STANDALONE
+	virtual bool IsLoaded() const override;
+#endif
 #endif
 
 	// End IMonoRuntime implementation
@@ -156,6 +159,12 @@ void FMonoRuntime::StartupModule()
 
 	// Initialize JIT, and create main domain
 	MonoMainDomain.Reset(FMonoMainDomain::CreateMonoJIT(MonoDirectory, EngineAssemblyDirectory, GameAssemblyDirectory));
+#if MONOUE_STANDALONE
+	if (!MonoMainDomain->Loaded)
+	{
+		return;
+	}
+#endif
 
 	// Initialize game bindings/domain
 	MonoBindings.Reset(FMonoBindings::CreateMonoBindings(*MonoMainDomain, EngineAssemblyDirectory, GameAssemblyDirectory));
@@ -336,6 +345,13 @@ bool FMonoRuntime::AddDllMapForModule(const char* DllName, const FName AddModule
 	mono_dllmap_insert(NULL, DllName, NULL, TCHAR_TO_ANSI(*ModuleStatus.FilePath) , NULL);
 	return true;
 }
+
+#if MONOUE_STANDALONE
+bool FMonoRuntime::IsLoaded() const
+{
+	return MonoMainDomain->Loaded;
+}
+#endif
 
 #endif
 

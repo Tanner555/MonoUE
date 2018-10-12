@@ -19,6 +19,10 @@ public:
 
 	static FString GetConfigurationSpecificSubdirectory(const FString &ParentDirectory);
 
+#if MONOUE_STANDALONE
+	bool Loaded;
+#endif
+
 private:
 	FMonoMainDomain(MonoDomain* InDomain, const FString& InEngineAssemblyDirectory, const FString& InGameAssemblyDirectory);
 

@@ -24,10 +24,20 @@ FMonoMainDomain::FMonoMainDomain(MonoDomain* InDomain, const FString& InEngineAs
 	: FMonoDomain(InDomain, Mono::InvokeExceptionBehavior::OutputToLog)
 	, EngineAssemblyDirectory(InEngineAssemblyDirectory)
 	, GameAssemblyDirectory(InGameAssemblyDirectory)
+#if MONOUE_STANDALONE
+	, Loaded(false)
+#endif
 {
 	const FString MainDomainAssemblyName = ANSI_TO_TCHAR(MONO_UE4_NAMESPACE ".MainDomain");
 
+#if MONOUE_STANDALONE
+	if (!MainDomainAssembly.Open(GetDomain(), MainDomainAssemblyName))
+	{
+		return;
+	}
+#else
 	verify(MainDomainAssembly.Open(GetDomain(), MainDomainAssemblyName));
+#endif
 
 	MonoMethod* InitializeMethod = MainDomainAssembly.LookupMethod(MONO_UE4_NAMESPACE ".MainDomain.MainDomain:Initialize");
 	check(InitializeMethod);
@@ -43,6 +53,10 @@ FMonoMainDomain::FMonoMainDomain(MonoDomain* InDomain, const FString& InEngineAs
 	check(AppDomainClass);
 	AppDomainMonoAppDomainField = mono_class_get_field_from_name(AppDomainClass, "_mono_app_domain");
 	check(AppDomainMonoAppDomainField);
+
+#if MONOUE_STANDALONE
+	Loaded = true;
+#endif
 }
 
 FMonoMainDomain::~FMonoMainDomain()

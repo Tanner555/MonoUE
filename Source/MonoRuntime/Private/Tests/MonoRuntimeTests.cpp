@@ -16,6 +16,13 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMonoRuntimeBindingTests, "MonoRuntime.Mono Bin
 
 bool FMonoRuntimeBindingTests::RunTest(const FString& Parameters)
 {
+#if MONOUE_STANDALONE
+	//if (!IMonoRuntime::Get().IsAvailable() || !IMonoRuntime::Get().IsLoaded())
+	{
+		return false;
+	}
+#endif
+
 	// run simple runtime tests
 	UMonoTestsObject* TestsObject = NewObject<UMonoTestsObject>();
 	TestsObject->Tester = this;

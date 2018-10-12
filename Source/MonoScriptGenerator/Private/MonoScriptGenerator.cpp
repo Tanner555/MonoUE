@@ -13,6 +13,21 @@ DEFINE_LOG_CATEGORY(LogMonoScriptGenerator);
 
 class FMonoScriptGenerator : public IMonoScriptGenerator
 {
+#if MONOUE_STANDALONE
+private:
+	IConsoleObject* GenerateCodeCmd;
+
+	void GenerateCode(const TArray<FString>& Args);
+
+public:
+	FMonoScriptGenerator()
+		: GenerateCodeCmd(nullptr)
+	{	
+	}
+
+private:
+#endif
+
 	/** Specialized script code generator */
 	TUniquePtr<FMonoScriptCodeGenerator> CodeGenerator;
 
@@ -47,9 +62,24 @@ class FMonoScriptGenerator : public IMonoScriptGenerator
 
 IMPLEMENT_MODULE(FMonoScriptGenerator, MonoScriptGenerator)
 
+#if MONOUE_STANDALONE
+void FMonoScriptGenerator::GenerateCode(const TArray<FString>& Args)
+{
+	UE_LOG(LogMonoScriptGenerator, Log, TEXT("TODO: Emulate what UBT does to invoke the script generator"));
+}
+#endif
 
 void FMonoScriptGenerator::StartupModule()
 {
+#if MONOUE_STANDALONE
+	GenerateCodeCmd = IConsoleManager::Get().RegisterConsoleCommand(
+			TEXT("MonoGen"),
+			TEXT("MonoUE generate C# code"),
+			FConsoleCommandWithArgsDelegate::CreateRaw(this, &FMonoScriptGenerator::GenerateCode),
+			ECVF_Default);
+#endif
+	return;
+
 	IModularFeatures::Get().RegisterModularFeature(TEXT("ScriptGenerator"), this);
 	MonoScriptCodeGeneratorUtils::InitializeToolTipLocalization();
 	CodeGenerator = MakeUnique<FMonoScriptCodeGenerator>();

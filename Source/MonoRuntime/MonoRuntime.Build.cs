@@ -11,7 +11,13 @@ namespace UnrealBuildTool.Rules
 	{
 		public MonoRuntime(ReadOnlyTargetRules Target) : base(Target)
 		{
-			PrivateIncludePaths.AddRange(
+            // TODO: Add a check to make sure this isn't a full engine build
+            {
+                PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+                Definitions.Add("MONOUE_STANDALONE");
+            }
+
+            PrivateIncludePaths.AddRange(
 				new string[] {
 					"MonoRuntime/Private",
 				}

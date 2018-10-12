@@ -81,6 +81,10 @@ public:
 	*/
 	virtual bool AddDllMapForModule(const char* DllName, const FName AddModuleName) const = 0;
 
+#if MONOUE_STANDALONE
+	virtual bool IsLoaded() const = 0;
+#endif
+
 #endif // WITH_EDITOR
 
 	static inline IMonoRuntime& Get()

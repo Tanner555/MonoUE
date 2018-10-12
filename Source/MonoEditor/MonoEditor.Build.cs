@@ -7,6 +7,12 @@ namespace UnrealBuildTool.Rules
 	{
         public MonoEditor(ReadOnlyTargetRules Target) : base(Target)
 		{
+			// TODO: Add a check to make sure this isn't a full engine build
+            {
+                PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+                Definitions.Add("MONOUE_STANDALONE");
+            }
+			
 			PublicDependencyModuleNames.AddRange(
 				new string[]
 				{

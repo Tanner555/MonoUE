@@ -680,6 +680,7 @@ void FMonoBindings::BeginReload(ReloadContext& Context, bool bReinstancing)
 		Context.ReloadClasses.Add(ReloadClass(MonoUnrealClass));
 	}
 
+#if !MONOUE_STANDALONE
 	// if we're not reinstancing (i.e. game may be running), track any actors with input enabled
 	if (!bReinstancing)
 	{
@@ -699,6 +700,7 @@ void FMonoBindings::BeginReload(ReloadContext& Context, bool bReinstancing)
 			}
 		}
 	}
+#endif
 
 	Context.CachedPreviousDomain = GetDomain();
 	SetDomain(nullptr);
@@ -780,11 +782,13 @@ void FMonoBindings::EndReload(ReloadContext& Context)
 
 			AActor* Actor = Cast<AActor>(Object);
 
+#if !MONOUE_STANDALONE
 			if (nullptr != Actor && nullptr != Actor->InputComponent && Context.BoundInputActors.Contains(Actor))
 			{
 				// rebind input
 				UnrealClass.BindInputDelegates(Object);
 			}
+#endif
 		}
 		else
 		{
@@ -1035,7 +1039,14 @@ bool FMonoBindings::InitializeDomain(const TArray<FMonoLoadedAssemblyMetadata>& 
 	const FString MonoAssemblyName = ANSI_TO_TCHAR(MONO_BINDINGS_NAMESPACE);
 
 	RuntimeState.MonoBindingsAssembly = MakeShareable(new FCachedAssembly());
+#if MONOUE_STANDALONE
+	if (!RuntimeState.MonoBindingsAssembly->Open(GetDomain(), MonoAssemblyName))
+	{
+		return false;
+	}
+#else
 	verify(RuntimeState.MonoBindingsAssembly->Open(GetDomain(), MonoAssemblyName));
+#endif
 	RuntimeState.AllAssemblies.Add(MONO_BINDINGS_NAMESPACE, RuntimeState.MonoBindingsAssembly);
 
 	// Ensure that type lookups work correctly for object properties of type UnrealObject.
@@ -1080,7 +1091,15 @@ bool FMonoBindings::InitializeDomain(const TArray<FMonoLoadedAssemblyMetadata>& 
 
 	// load the assembly which contains all built-in modules
 	FString ErrorMessage;
+#if MONOUE_STANDALONE
+	if (!LoadAssembly(ErrorMessage, GetBuiltinModuleBindingsAssemblyName()).IsValid())
+	{
+		UE_LOG(LogMono, Error, TEXT("Failed to load bindings assembly %s: %s"), *GetBuiltinModuleBindingsAssemblyName(), *ErrorMessage);
+		return false;
+	}
+#else
 	verifyf(LoadAssembly(ErrorMessage, GetBuiltinModuleBindingsAssemblyName()).IsValid(), TEXT("Failed to load bindings assembly %s: %s"), *GetBuiltinModuleBindingsAssemblyName(), *ErrorMessage);
+#endif
 
 	// TODO: handle on the fly modules
 	TSet<FName> AlreadyLoadedScriptPackages;

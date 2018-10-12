@@ -10,7 +10,13 @@ namespace UnrealBuildTool.Rules
 	{
         public MonoScriptGenerator(ReadOnlyTargetRules Target) : base(Target)
 		{
-			PublicIncludePaths.AddRange(
+            // TODO: Add a check to make sure this isn't a full engine build
+            {
+                PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+                Definitions.Add("MONOUE_STANDALONE");
+            }
+
+            PublicIncludePaths.AddRange(
 				new string[] {					
 					"Programs/UnrealHeaderTool/Public",
 				}

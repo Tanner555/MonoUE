@@ -47,6 +47,13 @@ IMPLEMENT_MODULE(FMonoEditorPlugin, IMonoEditorPlugin)
 
 void FMonoEditorPlugin::StartupModule()
 {
+#if MONOUE_STANDALONE
+	// If in MonoUE.uplugin MonoScriptGenerator is set to Editor/PostConfigInit it seemingly doesn't load.
+	// - One option is to change it to PostDefault which will ensure it is loaded. For now manually load it to
+	//   reduce the amount of changes outside of "MONOUE_STANDALONE" tags
+	FModuleManager::Get().LoadModuleChecked("MonoScriptGenerator");
+#endif
+
 	FGameProjectGenerationModule::Get().RegisterTemplateCategory(
 		TEXT("CSharp"),
 		LOCTEXT("CSharpCategory_Name", "C#"),
@@ -66,6 +73,13 @@ void FMonoEditorPlugin::StartupModule()
 	FMessageLogInitializationOptions InitOptions;
 	InitOptions.bShowFilters = true;
 	MessageLogModule.RegisterLogListing("MonoErrors", LOCTEXT("MonoErrorsLabel", "Mono Runtime Errors"), InitOptions);
+#endif
+
+#if MONOUE_STANDALONE
+	if (!IMonoRuntime::Get().IsLoaded())
+	{
+		return;
+	}
 #endif
 
 	IMonoRuntime::Get().AddDllMapForModule("MonoEditor", "MonoEditor");

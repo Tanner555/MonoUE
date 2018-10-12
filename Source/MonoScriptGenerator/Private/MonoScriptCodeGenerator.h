@@ -11,6 +11,7 @@
 #include "MonoProjectFile.h"
 #include "InclusionLists.h"
 #include "ScriptGenUtil.h"
+#include "UObject/Stack.h"
 
 class FMonoTextBuilder;
 

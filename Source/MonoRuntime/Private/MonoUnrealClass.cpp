@@ -195,6 +195,7 @@ void UMonoUnrealClass::Link(FArchive& Ar, bool bRelinkExistingProperties)
 	ClassFlags = OldClassFlags;
 }
 
+#if !MONOUE_STANDALONE
 bool UMonoUnrealClass::HasInputDelegateBindings(class UObject* InObject) const
 {
 	check(!bOverrideBindsInput || IsChildOf(AActor::StaticClass()));
@@ -265,7 +266,7 @@ void UMonoUnrealClass::GetChangedCustomLifetimeReplicatedProperties(const class 
 	check(CompiledClassAsset);
 	CompiledClassAsset->InvokeUpdateCustomLifetimeReplicatedProperties(*const_cast<UObject*>(InObject), ChangedPropertyTracker);
 }
-
+#endif
 
 UObject* UMonoUnrealClass::CreateDefaultObject()
 {

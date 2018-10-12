@@ -41,12 +41,14 @@ public:
 
 	virtual void Link(FArchive& Ar, bool bRelinkExistingProperties) override;
 
+#if !MONOUE_STANDALONE
 	virtual bool HasInputDelegateBindings(class UObject* InObject) const override;
 	virtual void BindInputDelegates(class UObject* InObject) const override;
 	virtual bool HasLifetimePropertyReplicationList(const class UObject* InObject) const override;
 	virtual void GetLifetimePropertyReplicationList(const class UObject* InObject, TArray< FLifetimeProperty > & OutLifetimeProps) const override;
 	virtual bool HasCustomLifetimeReplicatedProperties(const class UObject* InObject) const;
 	virtual void GetChangedCustomLifetimeReplicatedProperties(const class UObject* InObject, IRepChangedPropertyTracker& ChangedPropertyTracker) const;
+#endif
 
 #if MONO_WITH_HOT_RELOADING
 	void SetClassHash(const FString& InHash);

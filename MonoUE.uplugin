@@ -14,7 +14,7 @@
   [
     {
       "Name": "MonoScriptGenerator",
-      "Type": "Program",
+      "Type": "Editor",
       "LoadingPhase": "PostConfigInit"
     },
     {

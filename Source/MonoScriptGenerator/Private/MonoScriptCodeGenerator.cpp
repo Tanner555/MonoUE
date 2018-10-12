@@ -1728,6 +1728,16 @@ FString FMonoScriptCodeGenerator::GetCSharpEnumType(const EPropertyType Property
 {
 	switch (PropertyType)
 	{
+#if MONOUE_STANDALONE
+	case EPropertyType::CPT_Int8:   return TEXT("sbyte");   break;
+	case EPropertyType::CPT_Int16:  return TEXT("short");  break;
+	case EPropertyType::CPT_Int:    return TEXT("int");    break;
+	case EPropertyType::CPT_Int64:  return TEXT("long");  break;
+	case EPropertyType::CPT_Byte:   return TEXT("byte");   break;
+	case EPropertyType::CPT_UInt16: return TEXT("ushort"); break;
+	case EPropertyType::CPT_UInt32: return TEXT("uint"); break;
+	case EPropertyType::CPT_UInt64: return TEXT("ulong"); break;
+#else
 	case EPropertyType::Int8:   return TEXT("sbyte");   break;
 	case EPropertyType::Int16:  return TEXT("short");  break;
 	case EPropertyType::Int:    return TEXT("int");    break;
@@ -1736,6 +1746,7 @@ FString FMonoScriptCodeGenerator::GetCSharpEnumType(const EPropertyType Property
 	case EPropertyType::UInt16: return TEXT("ushort"); break;
 	case EPropertyType::UInt32: return TEXT("uint"); break;
 	case EPropertyType::UInt64: return TEXT("ulong"); break;
+#endif
 	default:
 		return TEXT("");
 	}
@@ -1774,6 +1785,9 @@ void FMonoScriptCodeGenerator::ExportEnums(FMonoTextBuilder& Builder, const TArr
 
 			FString EnumName = NameMapper.MapEnumName (Enum);
 
+#if MONOUE_STANDALONE
+			Builder.AppendLine(FString::Printf(TEXT("public enum %s"), *EnumName));
+#else
 			FString CSharpEnumType = GetCSharpEnumType(Enum->UnderlyingType);
 			if (CSharpEnumType.Len() == 0)
 			{
@@ -1782,6 +1796,7 @@ void FMonoScriptCodeGenerator::ExportEnums(FMonoTextBuilder& Builder, const TArr
 			}
 
 			Builder.AppendLine(FString::Printf(TEXT("public enum %s : %s"), *EnumName, *CSharpEnumType));
+#endif
 			Builder.OpenBrace();
 			const int32 ValueCount = Enum->NumEnums();
 

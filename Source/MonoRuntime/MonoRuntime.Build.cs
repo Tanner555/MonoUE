@@ -14,7 +14,7 @@ namespace UnrealBuildTool.Rules
             // TODO: Add a check to make sure this isn't a full engine build
             {
                 PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
-                Definitions.Add("MONOUE_STANDALONE");
+                PublicDefinitions.Add("MONOUE_STANDALONE");
             }
 
             PrivateIncludePaths.AddRange(

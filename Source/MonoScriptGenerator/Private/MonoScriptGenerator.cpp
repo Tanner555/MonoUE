@@ -65,7 +65,112 @@ IMPLEMENT_MODULE(FMonoScriptGenerator, MonoScriptGenerator)
 #if MONOUE_STANDALONE
 void FMonoScriptGenerator::GenerateCode(const TArray<FString>& Args)
 {
-	UE_LOG(LogMonoScriptGenerator, Log, TEXT("TODO: Emulate what UBT does to invoke the script generator"));
+	// Stripped down example of a uhtmanifest which is used to supply IScriptGeneratorPluginInterface with various paths
+	// MonoTest\Intermediate\Build\Win64\MonoTestEditor\Development\MonoTestEditor.uhtmanifest
+	//{
+	//    "IsGameTarget": true,
+	//    "RootLocalPath": "C:\\Program Files\\Epic Games\\UE_4.20",
+	//    "RootBuildPath": "C:\\Program Files\\Epic Games\\UE_4.20\\",
+	//    "TargetName": "MonoTestEditor",
+	//    "ExternalDependenciesFile": "C:\\Projects\\MonoTest\\Intermediate\\Build\\Win64\\MonoTestEditor\\Development\\MonoTestEditor.deps",
+	//    "Modules": [{
+	//        "Name": "CoreUObject",
+	//        "ModuleType": "EngineRuntime",
+	//        "BaseDirectory": "C:\\Program Files\\Epic Games\\UE_4.20\\Engine\\Source\\Runtime\\CoreUObject",
+	//        "IncludeBase": "C:\\Program Files\\Epic Games\\UE_4.20\\Engine\\Source\\Runtime",
+	//        "OutputDirectory": "C:\\Program Files\\Epic Games\\UE_4.20\\Engine\\Intermediate\\Build\\Win64\\UE4Editor\\Inc\\CoreUObject",
+	//        "ClassesHeaders": [],
+	//        "PublicHeaders": ["C:\\Program Files\\Epic Games\\UE_4.20\\Engine\\Source\\Runtime\\CoreUObject\\Public\\UObject\\CoreNetTypes.h", "C:\\Program Files\\Epic Games\\UE_4.20\\Engine\\Source\\Runtime\\CoreUObject\\Public\\UObject\\CoreOnline.h", "C:\\Program Files\\Epic Games\\UE_4.20\\Engine\\Source\\Runtime\\CoreUObject\\Public\\UObject\\NoExportTypes.h"],
+	//        "PrivateHeaders": [],
+	//        "PCH": "",
+	//        "GeneratedCPPFilenameBase": "C:\\Program Files\\Epic Games\\UE_4.20\\Engine\\Intermediate\\Build\\Win64\\UE4Editor\\Inc\\CoreUObject\\CoreUObject.gen",
+	//        "SaveExportedHeaders": false,
+	//        "UHTGeneratedCodeVersion": "None"
+	//    }, {
+	//        "Name": "InputCore",
+	//        "ModuleType": "EngineRuntime",
+	//        "BaseDirectory": "C:\\Program Files\\Epic Games\\UE_4.20\\Engine\\Source\\Runtime\\InputCore",
+	//        "IncludeBase": "C:\\Program Files\\Epic Games\\UE_4.20\\Engine\\Source\\Runtime",
+	//        "OutputDirectory": "C:\\Program Files\\Epic Games\\UE_4.20\\Engine\\Intermediate\\Build\\Win64\\UE4Editor\\Inc\\InputCore",
+	//        "ClassesHeaders": ["C:\\Program Files\\Epic Games\\UE_4.20\\Engine\\Source\\Runtime\\InputCore\\Classes\\InputCoreTypes.h"],
+	//        "PublicHeaders": [],
+	//        "PrivateHeaders": [],
+	//        "PCH": "",
+	//        "GeneratedCPPFilenameBase": "C:\\Program Files\\Epic Games\\UE_4.20\\Engine\\Intermediate\\Build\\Win64\\UE4Editor\\Inc\\InputCore\\InputCore.gen",
+	//        "SaveExportedHeaders": false,
+	//        "UHTGeneratedCodeVersion": "None"
+	//    }]
+	//}
+
+	// These paths are from .uhtmanifest
+	FString RootLocalPath = FPaths::Combine(*FPaths::EngineDir(), TEXT(".."));
+	FPaths::CollapseRelativeDirectories(RootLocalPath);
+	
+	FString RootBuildPath = RootLocalPath;// This is just the same as RootLocalPath?	
+
+	// OutputDirectory / IncludeBase are obtained from the module entry in .uhtmanifest (defined by GetGeneratedCodeModuleName which is "MonoRuntime")
+	// - The MonoUE generator doesn't currently use IncludeBase but does use OutputDirectory for the output code
+	FString PluginBaseDir = FPaths::GetPath(FModuleManager::Get().GetModuleFilename("MonoScriptGenerator"));
+	PluginBaseDir = FPaths::Combine(*PluginBaseDir, TEXT("../../"));
+	FPaths::CollapseRelativeDirectories(PluginBaseDir);
+
+	// I think this is where it normally goes?
+	FString OutDir = FPaths::Combine(*PluginBaseDir, TEXT("Intermediate/Build/Win64/UE4Editor/Inc/MonoRuntime"));
+	FPaths::CollapseRelativeDirectories(OutDir);
+
+	FString OutputDirectory = OutDir;
+	FString IncludeBase = OutDir;
+
+	Initialize(RootLocalPath, RootBuildPath, OutputDirectory, IncludeBase);	
+
+	// TODO: ModuleType info for modules doesn't appear to be available anywhere in the engine. Therefore we would need to search for all
+	//       .uplugin files and match them up to the loaded modules. Then use the "Type" to get the EBuildModuleType::Type from the json.
+	//       - I think UBT does this but UBT is written in C# so we would have to emulate this ourselves.
+
+	TArray<FName> ModuleNames;
+	FModuleManager::Get().FindModules(TEXT("*"), ModuleNames);
+
+	// Gather all UClass
+
+	TMap<UPackage*, TArray<UClass*>> ClassesByPackage;
+	for (TObjectIterator<UClass> ClassIt; ClassIt; ++ClassIt)
+	{
+		UClass* Class = *ClassIt;
+		UPackage* Package = Class->GetOutermost();
+
+		TArray<UClass*>* Classes = ClassesByPackage.Find(Package);
+		if (Classes == nullptr)
+		{
+			Classes = &ClassesByPackage.Add(Package, TArray<UClass*>());
+		}
+
+		Classes->Add(Class);
+	}
+
+	for (FName ModuleName : ModuleNames)
+	{
+		// Force everything to be a EBuildModuleType::EngineRuntime for now
+		// Last arg should be the module OutputDirectory from the json, this is currently only use for EBuildModuleType::GameRuntime
+		if (ShouldExportClassesForModule(ModuleName.ToString(), EBuildModuleType::EngineRuntime, TEXT("")))
+		{
+			FString PackageName = FString(TEXT("/Script/")) + ModuleName.ToString();
+			UPackage* Package = FindPackage(nullptr, *PackageName);
+			if (Package != nullptr)
+			{
+				TArray<UClass*>* Classes = ClassesByPackage.Find(Package);
+				if (Classes != nullptr)
+				{
+					for (UClass* Class : *Classes)
+					{
+						// Source / header file paths aren't used so just pass empty strings
+						ExportClass(Class, TEXT(""), TEXT(""), false);
+					}
+				}
+			}
+		}
+	}
+
+	FinishExport();
 }
 #endif
 
@@ -78,7 +183,6 @@ void FMonoScriptGenerator::StartupModule()
 			FConsoleCommandWithArgsDelegate::CreateRaw(this, &FMonoScriptGenerator::GenerateCode),
 			ECVF_Default);
 #endif
-	return;
 
 	IModularFeatures::Get().RegisterModularFeature(TEXT("ScriptGenerator"), this);
 	MonoScriptCodeGeneratorUtils::InitializeToolTipLocalization();

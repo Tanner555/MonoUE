@@ -2,7 +2,7 @@ This is a rough WIP test to get MonoUE working as a standalone plugin. See https
 
 _Current status: **not working**_
 
-- [X] Get the project to a compilable state
+- [X] Get MonoUE to compile
 - [ ] Add code to manually invoke the C# code generator to produce the UnrealEngine.BuiltInModules.dll
 
 ---

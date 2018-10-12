@@ -1,9 +1,10 @@
 This is a rough test to get MonoUE working as a standalone plugin. See https://mono-ue.github.io/
 
-_Current status: **not working**_
+_Current status: **not working?**_
 
 - [X] Get MonoUE to compile
-- [ ] Add code to manually invoke the C# code generator to produce the UnrealEngine.BuiltInModules.dll
+- [X] Add code to manually invoke the C# code generator to produce the UnrealEngine.BuiltInModules.dll
+- [ ] Test one of the mono template game projects
 
 ---
 

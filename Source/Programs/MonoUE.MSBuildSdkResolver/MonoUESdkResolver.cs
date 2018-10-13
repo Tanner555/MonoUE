@@ -7,9 +7,19 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Linq;
 
 namespace MonoUE.MSBuildSdkResolver
 {
+    static class SdkResolverExtensions
+    {
+        public static SdkResult IndicateFailureAndLog(this SdkResultFactory factory, IEnumerable<string> errors, IEnumerable<string> warnings = null)
+        {
+            System.Windows.Forms.MessageBox.Show("Mono.UE4.Sdk failed. Reason: " + string.Join(Environment.NewLine, errors));
+            return factory.IndicateFailure(errors, warnings);
+        }
+    }
+
 	//
 	// NOTE
 	//
@@ -25,22 +35,22 @@ namespace MonoUE.MSBuildSdkResolver
 		// this is annoying, as it means we can't provide useful errors to the user when it *is* a UE4 project
 		public override int Priority => 15000;
 
-		public override SdkResult Resolve(SdkReference sdkReference, SdkResolverContext resolverContext, SdkResultFactory factory)
+        public override SdkResult Resolve(SdkReference sdkReference, SdkResolverContext resolverContext, SdkResultFactory factory)
 		{
 			if (sdkReference.Name != "Mono.UE4.Sdk")
 			{
 				return factory.IndicateFailure(new[] { $"Not a UE4 SDK reference" });
 			}
 
-			//provide a way to force a specific directory
-			string engineDir = Environment.GetEnvironmentVariable("MONOUE_SDKRESOLVER_OVERRIDE_ENGINE_DIR");
+            //provide a way to force a specific directory
+            string engineDir = Environment.GetEnvironmentVariable("MONOUE_SDKRESOLVER_OVERRIDE_ENGINE_DIR");
 
 			if (string.IsNullOrEmpty(engineDir))
 			{
 				var uproject = GetUProjectFromMSBuildProject(resolverContext.SolutionFilePath, resolverContext.ProjectFilePath);
 				if (uproject == null)
 				{
-					return factory.IndicateFailure(new[] { $"Could not find a uproject file" });
+					return factory.IndicateFailureAndLog(new[] { $"Could not find a uproject file" });
 				}
 
 				var engineAssociation = ReadEngineAssociationFromUProject(uproject);
@@ -48,23 +58,24 @@ namespace MonoUE.MSBuildSdkResolver
 
 				if (string.IsNullOrEmpty(engineDir))
 				{
-					return factory.IndicateFailure(new[] { $"Could not find UE4 engine matching '{engineAssociation}'" });
+                    string installedLocationsInfo = ". Found: " + string.Join(", ", EnumerateEngineInstallations().ToList().Select(x => x.ID));
+                    return factory.IndicateFailureAndLog(new[] { $"Could not find UE4 engine matching '{engineAssociation}' {installedLocationsInfo}"  });
 				}
 			}
 
 			if (!Directory.Exists(engineDir))
 			{
-				return factory.IndicateFailure(new[] { $"UE4 engine directory '{engineDir}' does not exist" });
+				return factory.IndicateFailureAndLog(new[] { $"UE4 engine directory '{engineDir}' does not exist" });
 			}
 
 			if (!IsValidEngineDirectory(engineDir))
 			{
-				return factory.IndicateFailure(new[] { $"Engine '{engineDir}' is not a valid installation" });
+				return factory.IndicateFailureAndLog(new[] { $"Engine '{engineDir}' is not a valid installation" });
 			}
 
 			if (!IsMonoUEEngineDirectory(engineDir))
 			{
-				return factory.IndicateFailure(new[] { $"Engine '{engineDir}' does not contain MonoUE plugin" });
+				return factory.IndicateFailureAndLog(new[] { $"Engine '{engineDir}' does not contain MonoUE plugin" });
 			}
 
 			var sdkDir = Path.Combine(engineDir, "Engine", "Plugins", "MonoUE", "MSBuild", "Sdks", sdkReference.Name, "Sdk");
@@ -75,7 +86,7 @@ namespace MonoUE.MSBuildSdkResolver
 				return factory.IndicateSuccess(sdkDir, "1.0");
 			}
 
-			return factory.IndicateFailure(new[] { $"Did not find SDK '{sdkReference.Name}'" });
+			return factory.IndicateFailureAndLog(new[] { $"Did not find SDK '{sdkReference.Name}'" });
 		}
 
 		static string GetUProjectFromMSBuildProject(string msbuildSolutionFile, string msbuildProjectFile)
@@ -170,10 +181,10 @@ namespace MonoUE.MSBuildSdkResolver
 			}
 		}
 
-		static IEnumerable<EngineInstallation> EnumerateEngineInstallationsWindows()
-		{
-			// TODO: read launcher installations using LauncherInstalled.dat
-			// doesn't really matter until we support unpatched engines
+        static IEnumerable<EngineInstallation> EnumerateEngineInstallationsWindows()
+        {
+            // TODO: read launcher installations using LauncherInstalled.dat
+            // doesn't really matter until we support unpatched engines
 
 			using (var hkcu64 = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Registry64))
 			using (var buildsKey = hkcu64.OpenSubKey(@"Software\Epic Games\Unreal Engine\Builds"))
@@ -187,7 +198,41 @@ namespace MonoUE.MSBuildSdkResolver
 					}
 				}
 			}
-		}
+
+            using (var hkcu64 = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
+            using (var key = hkcu64.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"))
+            {
+                foreach (string subkeyName in key.GetSubKeyNames())
+                {
+                    using (RegistryKey subkey = key.OpenSubKey(subkeyName))
+                    {
+                        string displayName = subkey.GetValue("DisplayName") as string;                        
+                        if(displayName == "Unreal Engine")
+                        {
+                            string installLocation = subkey.GetValue("InstallLocation") as string;
+                            if (!string.IsNullOrEmpty(installLocation) && Directory.Exists(installLocation))
+                            {
+                                DirectoryInfo directory = new DirectoryInfo(installLocation);
+                                foreach(DirectoryInfo engineVersion in directory.GetDirectories())
+                                {
+                                    if(Directory.Exists(Path.Combine(engineVersion.FullName, "Engine")) &&
+                                       Directory.Exists(Path.Combine(engineVersion.FullName, "Templates")))
+                                    {
+                                        yield return new EngineInstallation { ID = engineVersion.Name, Path = engineVersion.FullName };
+
+                                        if (engineVersion.Name.StartsWith("UE_") && engineVersion.Name.Length > 3)
+                                        {
+                                            yield return new EngineInstallation { ID = engineVersion.Name.Substring(3), Path = engineVersion.FullName };
+                                        }
+                                    }
+                                }
+                            }                            
+                        }
+                    }
+                }
+            }
+
+        }
 
 		static IEnumerable<EngineInstallation> EnumerateEngineInstallationsMac()
 		{

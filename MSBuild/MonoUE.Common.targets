@@ -29,7 +29,7 @@ For details, see LICENSE.txt.
   <Target Name="MonoUE4CheckConfig" BeforeTargets="PrepareForBuild" Condition="'$(_MonoUEIsGame)' == 'True'">
     <Error
       Condition="!Exists('$(UE4EngineAssembliesPath)\UnrealEngine.Runtime.dll')"
-      Text="Engine binaries not found for active configuration and platform '$(Configuration)|$(Platform)'.
+      Text="Engine binaries not found for active configuration and platform '$(Configuration)|$(Platform)' ('$(UE4EngineAssembliesPath)\UnrealEngine.Runtime.dll').
 Please ensure you have built the engine for this configuration and platform, or change the active configuration or platform for your current solution."
     />
     <Error

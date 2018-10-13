@@ -35,7 +35,7 @@ Enter resolvers.
 
 ## Resolvers
 
-In MSBuild 15.3 a new mechanism called SDK resolvers was added. An SDK resolver is simply a dll that subclasses the SdkResolver class. Like SDKs, SDK resolvers are installed into a subdirectory of the MSBuild `bin` - this time called `SdkResolvers` (surprise!). 
+In MSBuild 15.3 a new mechanism called SDK resolvers was added. An SDK resolver is simply a dll that subclasses the SdkResolver class. Like SDKs, SDK resolvers are installed into a subdirectory of the MSBuild `bin` - this time called `SdkResolvers` (surprise!). ("Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\SdkResolvers")
 
 When MSBuild is attempting to resolve an SDK, it queries all the resolvers to see whether they can find it. They can return a path from anywere on the filesystem. This means that although the resolver itself still needs admin access to be installed, the SDK does not.
 

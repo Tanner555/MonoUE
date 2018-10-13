@@ -16,7 +16,7 @@ _Current status: **Functional** (after painfully getting the files in the right 
 
 ## How to generate the UE4 bindings:
 
-- In the UE4 console type "MonoGen", this will generate a bunch of .cs/.csproj files and a .sln file under "MonoUE/Intermediate/Build/Win64/Mono/". Currently this is going to the wrong location so you need to delete everything other than the "UnrealEngine.BuiltinModules" folder, then fix up the MonoUE.EngineBinding.props path in the .csproj, then open the .csproj manually (with the generated .sln deleted) and then compile. You then likely need to copy the output dll into various places.
+- In the UE4 console type "MonoGen", this will generate a bunch of .cs/.csproj files and a .sln file under "MonoUE/Intermediate/Build/Win64/Mono/". Currently this is going to the wrong location so you need to delete everything other than the "UnrealEngine.BuiltinModules" folder, then fix up the MonoUE.EngineBinding.props path in the .csproj, then open the .csproj in Visual Studio manually (with the generated .sln deleted) and then compile. You then likely need to copy the output dll into various places.
 
 ## Issues:
 

@@ -57,3 +57,9 @@
 
 # Unignore VS extension bits
 !*.vsixmanifest
+
+# Ignore Template Content Files Automatically Generated
+Templates/TP_ThirdPersonMono/Content
+Templates/TP_ThirdPersonMono/Media
+Templates/TP_ThirdPersonMonoBP/Content
+Templates/TP_ThirdPersonMonoBP/Media

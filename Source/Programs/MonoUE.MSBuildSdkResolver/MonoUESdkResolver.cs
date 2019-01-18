@@ -58,7 +58,7 @@ namespace MonoUE.MSBuildSdkResolver
 
 				if (string.IsNullOrEmpty(engineDir))
 				{
-                    string installedLocationsInfo = ". Found: " + string.Join(", ", EnumerateEngineInstallations(engineAssociation, string.Empty).ToList().Select(x => x.ID));
+                    string installedLocationsInfo = ". Found: " + string.Join(", ", EnumerateEngineInstallations().ToList().Select(x => x.ID));
                     return factory.IndicateFailureAndLog(new[] { $"Could not find UE4 engine matching '{engineAssociation}' {installedLocationsInfo}"  });
 				}
 			}
@@ -139,7 +139,7 @@ namespace MonoUE.MSBuildSdkResolver
 		{
 			if (Guid.TryParse(engineID, out Guid engineGuid))
 			{
-                foreach (var installation in EnumerateEngineInstallations(engineID, engineGuid.ToString()))
+                foreach (var installation in EnumerateEngineInstallations())
 				{
 					if (Guid.TryParse(installation.ID, out Guid installationGuid) && installationGuid == engineGuid)
 					{
@@ -149,7 +149,7 @@ namespace MonoUE.MSBuildSdkResolver
 			}
 			else
 			{
-				foreach (var installation in EnumerateEngineInstallations(engineID, string.Empty))
+				foreach (var installation in EnumerateEngineInstallations())
 				{
 					if (string.Equals(installation.ID, engineID, StringComparison.OrdinalIgnoreCase))
 					{
@@ -165,11 +165,11 @@ namespace MonoUE.MSBuildSdkResolver
 			public string ID, Path;
 		}
 
-		static IEnumerable<EngineInstallation> EnumerateEngineInstallations(string engineID, string engineIDFromGUID)
+		static IEnumerable<EngineInstallation> EnumerateEngineInstallations()
 		{
 			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 			{
-				return EnumerateEngineInstallationsWindows(engineID, engineIDFromGUID);
+				return EnumerateEngineInstallationsWindows();
 			}
 			else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
 			{
@@ -181,7 +181,7 @@ namespace MonoUE.MSBuildSdkResolver
 			}
 		}
 
-        static IEnumerable<EngineInstallation> EnumerateEngineInstallationsWindows(string engineID, string engineIDFromGUID)
+        static IEnumerable<EngineInstallation> EnumerateEngineInstallationsWindows()
         {
             // TODO: read launcher installations using LauncherInstalled.dat
             // doesn't really matter until we support unpatched engines

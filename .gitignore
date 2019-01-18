@@ -64,5 +64,10 @@ Templates/TP_ThirdPersonMono/Content
 Templates/TP_ThirdPersonMono/Media
 Templates/TP_ThirdPersonMonoBP/Content
 Templates/TP_ThirdPersonMonoBP/Media
+
 # Ignore Visual Studio Database Folders
 .vs
+
+# Ignore Generated All Native Classes Manifest Files
+Mono/AllNativeClasses.manifest
+Mono/UnrealEngine.Runtime.props

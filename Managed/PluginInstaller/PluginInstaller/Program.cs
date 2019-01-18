@@ -672,8 +672,21 @@ namespace PluginInstaller
             Console.WriteLine("Looking For Generated " + builtInModulesDLL + " file at " + platformOutputDir.FullName);
             if (LookForFileRecursive(platformOutputDir, builtInModulesDLL, true, out builtInModulesDLLParentDir))
             {
-                Console.WriteLine(builtInModulesDLL + " found at " + Path.Combine(builtInModulesDLLParentDir, builtInModulesDLL));
-
+                FileInfo builtInModulesDLLFileInfo = new FileInfo(Path.Combine(builtInModulesDLLParentDir, builtInModulesDLL));
+                Console.WriteLine(builtInModulesDLL + " found at " + builtInModulesDLLFileInfo.FullName);
+                List<DirectoryInfo> ModulesDLLCopyToDirs = new List<DirectoryInfo>
+                {
+                    new DirectoryInfo(Path.Combine(pluginDir, "ThirdParty", "mono", "fx", "MonoUE", "v1.0"))
+                };
+                foreach (DirectoryInfo modulesCopyToDir in ModulesDLLCopyToDirs)
+                {
+                    if (modulesCopyToDir.Exists)
+                    {
+                        Console.WriteLine("Copying " + builtInModulesDLL + " from " + builtInModulesDLLParentDir + " to " + modulesCopyToDir.FullName);
+                        CopyFilesRecursive(builtInModulesDLLFileInfo.Directory, modulesCopyToDir, true);
+                    }
+                }
+                Console.WriteLine("Copying " + builtInModulesDLL + " Finished \n");
             }
             else
             {

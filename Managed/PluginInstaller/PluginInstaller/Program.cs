@@ -307,64 +307,83 @@ namespace PluginInstaller
         }
 
         /// <summary>
-        /// Returns the main USharp plugin directory from the engine path
+        /// Returns the main MonoUE plugin directory from the engine path
         /// </summary>
-        private static string GetUSharpPluginDirectory(string enginePath)
+        private static string GetMonoUEPluginDirectory(string enginePath)
         {
-            return Path.Combine(enginePath, "Engine", "Plugins", "USharp");
+            return Path.Combine(enginePath, "Engine", "Plugins", "MonoUE");
         }
 
         private static void CompileCs(string[] args)
         {
-            string slnDir = Path.Combine(GetCurrentDirectory(), "../../../Managed/UnrealEngine.Runtime");
-            if (!Directory.Exists(slnDir))
+            //Compile C# Projects
+            string pluginDir = Path.Combine(GetCurrentDirectory(), "../../../");
+            string pluginManagedDir = Path.Combine(pluginDir, "Managed");
+
+            if (!Directory.Exists(pluginManagedDir))
             {
-                Console.WriteLine("Failed to find the UnrealEngine.Runtime directory");
+                Console.WriteLine("Failed to find the Plugin Managed directory");
                 return;
             }
+
+            string unrealRuntimeSln = Path.Combine(pluginManagedDir, "MonoBindings", "UnrealEngine.Runtime" + ".sln");
+            string unrealRuntimeProj = Path.Combine(pluginManagedDir, "MonoBindings", "UnrealEngine.Runtime" + ".csproj");
+            string mainDomainSln = Path.Combine(pluginManagedDir, "MonoMainDomain", "UnrealEngine.MainDomain" + ".sln");
+            string mainDomainProj = Path.Combine(pluginManagedDir, "MonoMainDomain", "UnrealEngine.MainDomain" + ".csproj");
             
-            string loaderProj = Path.Combine(slnDir, "Loader/Loader.csproj");
-            string runtimeProj = Path.Combine(slnDir, "UnrealEngine.Runtime/UnrealEngine.Runtime.csproj");
-            string assemblyRewriterProj = Path.Combine(slnDir, "UnrealEngine.AssemblyRewriter/UnrealEngine.AssemblyRewriter.csproj");
-            string[] projectPaths = { loaderProj, runtimeProj, assemblyRewriterProj };
-            string[] shippingBuildProjectPaths = { runtimeProj };
-            string slnPath = Path.Combine(slnDir, "UnrealEngine.Runtime.sln");
+            ///Pair of Solution / Project Paths
+            Dictionary<string, string> solutionProjectBuildLibrary = new Dictionary<string, string>
+            {
+                { unrealRuntimeSln, unrealRuntimeProj},  { mainDomainSln, mainDomainProj}
+            };
 
             Dictionary<string, string> keyValues = GetKeyValues(args);
             bool x86Build = keyValues.ContainsKey("x86");
 
-            foreach (string projPath in projectPaths)
+            foreach (var solutionProjectPaths in solutionProjectBuildLibrary)
             {
+                string slnPath = solutionProjectPaths.Key;
+                string projPath = solutionProjectPaths.Value;
+
                 if (!File.Exists(projPath))
                 {
                     Console.WriteLine("Failed to find C# project '{0}'", projPath);
                     return;
                 }
+
+                string targetName = Path.GetFileName(projPath);
+                if (!BuildCs(slnPath, projPath, true, x86Build, null))
+                {
+                    Console.WriteLine("Failed to build (see build.log) - " + targetName);
+                    return;
+                }
+                else
+                {
+                    Console.WriteLine("Build successful - " + targetName);
+                }
             }
 
-            for (int i = 0; i < 2; i++)
+            //Move C# Output Files
+            //Temporary Path - Only Works On Windows And May Change In the Future
+            DirectoryInfo copyFromOutputDir = new DirectoryInfo(Path.Combine(pluginDir, "Binaries", "Win64", "Mono-Debug"));
+            DirectoryInfo copyToOutputDir = new DirectoryInfo(Path.Combine(pluginDir, "ThirdParty", "mono", "fx", "MonoUE", "v1.0"));
+            if (!copyFromOutputDir.Exists)
             {
-                bool shippingBuild = i == 1;
-                string[] paths = shippingBuild ? shippingBuildProjectPaths : projectPaths;
-
-                foreach (string projPath in paths)
-                {
-                    string targetName = Path.GetFileName(projPath);
-                    if (shippingBuild)
-                    {
-                        targetName += " (Shipping)";
-                    }
-
-                    if (!BuildCs(slnPath, projPath, !shippingBuild, x86Build, null))
-                    {
-                        Console.WriteLine("Failed to build (see build.log) - " + targetName);
-                        return;
-                    }
-                    else
-                    {
-                        Console.WriteLine("Build successful - " + targetName);
-                    }
-                }
+                Console.WriteLine("Couldn't Copy Files Because Directory" + copyFromOutputDir.FullName + " Doesn't Exist.");
+                return;
+            }
+            else if (!copyToOutputDir.Exists)
+            {
+                Console.WriteLine("Couldn't Copy Files Because Directory" + copyToOutputDir.FullName + " Doesn't Exist.");
+                return;
+            }
+            else
+            {
+                Console.WriteLine("Copying Files From:");
+                Console.WriteLine(@"""" + copyFromOutputDir.FullName + @"""");
+                Console.WriteLine("To:");
+                Console.WriteLine(@"""" + copyToOutputDir.FullName + @"""");
+                CopyFilesRecursive(copyFromOutputDir, copyToOutputDir, true);
             }
         }
 

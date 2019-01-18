@@ -139,7 +139,7 @@ namespace MonoUE.MSBuildSdkResolver
 		{
 			if (Guid.TryParse(engineID, out Guid engineGuid))
 			{
-				foreach (var installation in EnumerateEngineInstallations())
+                foreach (var installation in EnumerateEngineInstallations())
 				{
 					if (Guid.TryParse(installation.ID, out Guid installationGuid) && installationGuid == engineGuid)
 					{
@@ -194,39 +194,34 @@ namespace MonoUE.MSBuildSdkResolver
 					foreach (var valueID in buildsKey.GetValueNames())
 					{
 						var path = (string)buildsKey.GetValue(valueID);
-						yield return new EngineInstallation { ID = valueID, Path = path };
+                        if (!string.IsNullOrEmpty(path) && Directory.Exists(path))
+                        {
+                            yield return new EngineInstallation { ID = valueID, Path = path };
+                        }
 					}
 				}
 			}
 
             using (var hkcu64 = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
-            using (var key = hkcu64.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"))
+            using (var key = hkcu64.OpenSubKey(@"SOFTWARE\Epic Games\Unreal Engine"))
             {
                 foreach (string subkeyName in key.GetSubKeyNames())
                 {
                     using (RegistryKey subkey = key.OpenSubKey(subkeyName))
                     {
-                        string displayName = subkey.GetValue("DisplayName") as string;                        
-                        if(displayName == "Unreal Engine")
+                        string installDirectory = subkey.GetValue("InstalledDirectory") as string;
+                        if (!string.IsNullOrEmpty(installDirectory) && Directory.Exists(installDirectory))
                         {
-                            string installLocation = subkey.GetValue("InstallLocation") as string;
-                            if (!string.IsNullOrEmpty(installLocation) && Directory.Exists(installLocation))
+                            DirectoryInfo engineVersion = new DirectoryInfo(installDirectory);
+                            if (Directory.Exists(Path.Combine(engineVersion.FullName, "Engine")))
                             {
-                                DirectoryInfo directory = new DirectoryInfo(installLocation);
-                                foreach(DirectoryInfo engineVersion in directory.GetDirectories())
-                                {
-                                    if(Directory.Exists(Path.Combine(engineVersion.FullName, "Engine")) &&
-                                       Directory.Exists(Path.Combine(engineVersion.FullName, "Templates")))
-                                    {
-                                        yield return new EngineInstallation { ID = engineVersion.Name, Path = engineVersion.FullName };
+                                yield return new EngineInstallation { ID = engineVersion.Name, Path = engineVersion.FullName };
 
-                                        if (engineVersion.Name.StartsWith("UE_") && engineVersion.Name.Length > 3)
-                                        {
-                                            yield return new EngineInstallation { ID = engineVersion.Name.Substring(3), Path = engineVersion.FullName };
-                                        }
-                                    }
+                                if (engineVersion.Name.StartsWith("UE_") && engineVersion.Name.Length > 3)
+                                {
+                                    yield return new EngineInstallation { ID = engineVersion.Name.Substring(3), Path = engineVersion.FullName };
                                 }
-                            }                            
+                            }
                         }
                     }
                 }

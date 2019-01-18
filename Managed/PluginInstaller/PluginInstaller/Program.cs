@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
+using simpleFParser = PluginInstaller.SimpleFileParserUtility;
 
 // TODO:
 // [ ] Exception handling for various actions which could fail (file handles being held etc)
@@ -114,6 +115,10 @@ namespace PluginInstaller
                         }
                         break;
 
+                    case "patchmodules":
+                        PatchBuiltInModules(args);
+                        Console.WriteLine("done");
+                        break;
                     case "help":
                     case "?":
                         PrintHelp();
@@ -130,6 +135,7 @@ namespace PluginInstaller
             //Console.WriteLine("- build       builds C# and C++ projects");
             Console.WriteLine("- buildcs     builds C# projects (Loader, AssemblyRewriter, Runtime)");
             Console.WriteLine("- buildcpp    builds C++ projects");
+            Console.WriteLine("- patchmodules    patches the builtinmodules directory to correct c# project / create solution / and compile.");
             //Console.WriteLine("- copyruntime [all] [mono] [coreclr] copies the given runtime(s) locally");
         }
 
@@ -608,5 +614,164 @@ namespace PluginInstaller
             }
         }
 
+        private static void PatchBuiltInModules(string[] args)
+        {
+            string pluginDir = Path.Combine(GetCurrentDirectory(), "../../../");
+            string builtInModulesDir = Path.Combine(pluginDir, "Intermediate", "Build", "Win64", "Mono", "BuiltinModules");
+            string builtInModulesProj = Path.Combine(builtInModulesDir, "UnrealEngine.BuiltinModules" + ".csproj");
+            string builtInModulesSln = Path.Combine(builtInModulesDir, "UnrealEngine.BuiltinModules" + ".sln");
+
+            if (!Directory.Exists(builtInModulesDir))
+            {
+                Console.WriteLine("Built In Modules directory doesn't exist, please generate modules in an Unreal Project.");
+                return;
+            }
+            if (!File.Exists(builtInModulesProj))
+            {
+                Console.WriteLine("Built In Modules C# Project doesn't exist, please generate modules in an Unreal Project.");
+                return;
+            }
+
+            string projectGUID;
+            PatchBuiltInModulesProject(builtInModulesProj, out projectGUID);
+            if (string.IsNullOrEmpty(projectGUID))
+            {
+                Console.WriteLine("Couldn't Obtain Project GUID from BuildInModules C# Project");
+                return;
+            }
+
+            //Create Solution With Project GUID
+
+            //Attempt To Compile Project
+
+        }
+
+        private static void PatchBuiltInModulesProject(string projPath, out string projectGUID)
+        {
+            projectGUID = "";
+            string monoBindingsPropsName = "MonoUE.EngineBinding.props";
+            string monoBindingsPropsRef = @" <Import Project=" + @"""" + @"..\..\..\..\..\MSBuild\MonoUE.EngineBinding.props" + @"""" + @" />";
+            string unrealRuntimeCsRef = "UnrealEngine.Runtime.csproj";
+            string microsoftCSharpRefInclude = @"<Reference Include=" + @"""" + @"Microsoft.CSharp" + @"""" + @" />";
+            string unrealRuntimeDllRef = @"    <Reference Include=" + @"""" + @"UnrealEngine.Runtime" + @"""" + @" />";
+            string projectGuidOpeningTag = @"<ProjectGuid>";
+
+            if (!File.Exists(projPath)) return;
+
+            List<string> projectContent = File.ReadAllLines(projPath).ToList();
+            if (projectContent == null || projectContent.Count <= 0) return;
+
+            int monoBindingsPropsNameIndex = -1;
+            int unrealRuntimeCsRefIndex = -1;
+            int microsoftCSharpRefIncludeIndex = -1;
+            int unrealRuntimeDllRefIndex = -1;
+            int projectGuidOpeningTagIndex = -1;
+
+            //Makes This Functionality Reusable
+            Action updateLocalProjectContentIndexes = new Action(() =>
+            {
+                for (int i = 0; i < projectContent.Count; i++)
+                {
+                    if (projectContent[i].Contains(monoBindingsPropsName))
+                    {
+                        monoBindingsPropsNameIndex = i;
+                    }
+                    if (projectContent[i].Contains(unrealRuntimeCsRef))
+                    {
+                        unrealRuntimeCsRefIndex = i;
+                    }
+                    if (projectContent[i].Contains(microsoftCSharpRefInclude))
+                    {
+                        microsoftCSharpRefIncludeIndex = i;
+                    }
+                    if (projectContent[i].Contains(unrealRuntimeDllRef))
+                    {
+                        unrealRuntimeDllRefIndex = i;
+                    }
+                    if (projectContent[i].Contains(projectGuidOpeningTag))
+                    {
+                        projectGuidOpeningTagIndex = i;
+                    }
+                }
+            });
+
+            updateLocalProjectContentIndexes();
+
+            if(projectGuidOpeningTagIndex != -1)
+            {
+                //Attempt To Parse Project GUID
+                projectGUID = simpleFParser.ObtainStringFromLine('{', '}', 
+                    projectContent[projectGuidOpeningTagIndex],
+                    projectContent[projectGuidOpeningTagIndex].IndexOf(projectGuidOpeningTag));
+            }
+
+            if (monoBindingsPropsNameIndex != -1)
+            {
+                //Replace Mono Bindings Reference With Accurate One
+                projectContent[monoBindingsPropsNameIndex] = monoBindingsPropsRef;
+            }
+
+            if (unrealRuntimeCsRefIndex != -1)
+            {
+                bool bFoundOpeningItemGroupTag = true;
+                bool bFoundClosingItemGroupTag = true;
+                string openingItemGroupTag = @"<ItemGroup>";
+                string closingItemGroupTag = @"</ItemGroup>";
+                int openingItemGroupIndex = -1;
+                int closingItemGroupIndex = -1;
+                //Try Finding Opening Tag
+                if (projectContent[unrealRuntimeCsRefIndex].Contains(openingItemGroupTag))
+                {
+                    openingItemGroupIndex = unrealRuntimeCsRefIndex;
+                }
+                else if (projectContent[unrealRuntimeCsRefIndex - 1].Contains(openingItemGroupTag))
+                {
+                    openingItemGroupIndex = unrealRuntimeCsRefIndex - 1;
+                }
+                else
+                {
+                    bFoundOpeningItemGroupTag = false;
+                }
+                //Try Finding Closing Tag
+                if (projectContent[unrealRuntimeCsRefIndex].Contains(closingItemGroupTag))
+                {
+                    closingItemGroupIndex = unrealRuntimeCsRefIndex;
+                }
+                else if(projectContent[unrealRuntimeCsRefIndex + 1].Contains(closingItemGroupTag))
+                {
+                    closingItemGroupIndex = unrealRuntimeCsRefIndex + 1;
+                }
+                else if(projectContent[unrealRuntimeCsRefIndex + 2].Contains(closingItemGroupTag))
+                {
+                    closingItemGroupIndex = unrealRuntimeCsRefIndex + 2;
+                }
+                else
+                {
+                    bFoundClosingItemGroupTag = false;
+                }
+
+                if(bFoundOpeningItemGroupTag && bFoundClosingItemGroupTag &&
+                    openingItemGroupIndex != -1 && closingItemGroupIndex != -1)
+                {
+                    //Remove All Lines Containing UnrealRuntime C# Project Reference
+                    int unrealRuntimeCsProjRefLineCount = closingItemGroupIndex - openingItemGroupIndex;
+                    projectContent.RemoveRange(openingItemGroupIndex, unrealRuntimeCsProjRefLineCount);
+                }
+            }
+
+            updateLocalProjectContentIndexes();
+
+            //Only Insert unrealRuntimeDllRef If CSharp Ref Exists and unrealRuntimeDllRefIndex doesn't Exist
+            if (microsoftCSharpRefIncludeIndex != -1 && unrealRuntimeDllRefIndex == -1)
+            {
+                projectContent.Insert(microsoftCSharpRefIncludeIndex + 1, unrealRuntimeDllRef);
+            }
+
+            //Write To The Project File
+            if (projectContent.Count > 0)
+            {
+                File.WriteAllLines(projPath, projectContent.ToArray());
+            }
+        }
     }
 }

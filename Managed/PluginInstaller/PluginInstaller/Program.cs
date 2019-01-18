@@ -661,7 +661,24 @@ namespace PluginInstaller
             }
             Console.WriteLine("\n");
             //Find Dlls In Appropriate Location
+            string builtInModulesDLL = "UnrealEngine.BuiltinModules.dll";
+            DirectoryInfo platformOutputDir = new DirectoryInfo(Path.Combine(pluginDir, "Binaries", "Win64"));
+            string builtInModulesDLLParentDir;
+            if (!platformOutputDir.Exists)
+            {
+                Console.WriteLine("Couldn't find platformOutputDir at " + platformOutputDir);
+                return;
+            }
+            Console.WriteLine("Looking For Generated " + builtInModulesDLL + " file at " + platformOutputDir.FullName);
+            if (LookForFileRecursive(platformOutputDir, builtInModulesDLL, true, out builtInModulesDLLParentDir))
+            {
+                Console.WriteLine(builtInModulesDLL + " found at " + Path.Combine(builtInModulesDLLParentDir, builtInModulesDLL));
 
+            }
+            else
+            {
+                Console.WriteLine("Couldn't Find " + builtInModulesDLL);
+            }
         }
 
         protected static bool CreateSolutionFileFromProjectFile(string slnPath, string projPath, string projName, Guid projectGuid)
@@ -877,6 +894,71 @@ namespace PluginInstaller
             catch
             {
             }
+        }
+
+        internal static bool LookForFile(DirectoryInfo source, string fileLookFor, bool recursive, out List<string> foundDirs)
+        {
+            bool bFileWasFound = false;
+            List<string> localFoundDirs = new List<string>();
+            foundDirs = new List<string>();
+
+            if (recursive)
+            {
+                foreach (DirectoryInfo dir in source.GetDirectories())
+                {
+                    if(LookForFile(dir, fileLookFor, recursive, out foundDirs))
+                    {
+                        bFileWasFound = true;
+                        foreach (string foundDir in foundDirs)
+                        {
+                            if (!localFoundDirs.Contains(foundDir)) localFoundDirs.Add(foundDir);
+                        }
+                    }
+                }
+            }
+            foreach (FileInfo file in source.GetFiles())
+            {
+                if(file.Name == fileLookFor)
+                {
+                    bFileWasFound = true;
+                    foundDirs.Add(file.Directory.FullName);
+                    foreach (string foundDir in foundDirs)
+                    {
+                        if (!localFoundDirs.Contains(foundDir)) localFoundDirs.Add(foundDir);
+                    }
+                }
+            }
+            foundDirs = localFoundDirs;
+            return bFileWasFound;
+        }
+
+        internal static bool LookForFileRecursive(DirectoryInfo source, string fileLookFor, bool recursive, out string foundDir)
+        {
+            List<string> foundDirs;
+            List<FileInfo> foundFileInfos = new List<FileInfo>();
+            if(LookForFile(source, fileLookFor, recursive, out foundDirs))
+            {
+                //Attempt To Find the Most Recent File
+                foreach (string foundDirStr in foundDirs)
+                {
+                    string foundFileInfoStrPath = Path.Combine(foundDirStr, fileLookFor);
+                    FileInfo foundFileInfo = new FileInfo(foundFileInfoStrPath);
+                    if (foundFileInfo.Exists)
+                    {
+                        foundFileInfos.Add(foundFileInfo);
+                    }
+                }
+                if (foundFileInfos != null && foundFileInfos.Count > 0)
+                {
+                    FileInfo mostRecentFileInfo = (from f in foundFileInfos
+                                                   orderby f.LastWriteTime descending
+                                                   select f).First();
+                    foundDir = mostRecentFileInfo.Directory.FullName;
+                    return true;
+                }
+            }
+            foundDir = string.Empty;
+            return false;
         }
     }
 }

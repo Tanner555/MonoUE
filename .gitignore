@@ -63,3 +63,5 @@ Templates/TP_ThirdPersonMono/Content
 Templates/TP_ThirdPersonMono/Media
 Templates/TP_ThirdPersonMonoBP/Content
 Templates/TP_ThirdPersonMonoBP/Media
+# Ignore Visual Studio Database Folders
+.vs

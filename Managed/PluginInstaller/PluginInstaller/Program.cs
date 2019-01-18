@@ -616,10 +616,10 @@ namespace PluginInstaller
 
         private static void PatchBuiltInModules(string[] args)
         {
-            string pluginDir = Path.Combine(GetCurrentDirectory(), "../../../");
-            string builtInModulesDir = Path.Combine(pluginDir, "Intermediate", "Build", "Win64", "Mono", "BuiltinModules");
-            string builtInModulesProj = Path.Combine(builtInModulesDir, "UnrealEngine.BuiltinModules" + ".csproj");
-            string builtInModulesSln = Path.Combine(builtInModulesDir, "UnrealEngine.BuiltinModules" + ".sln");
+            string pluginDir = Path.GetFullPath(Path.Combine(GetCurrentDirectory(), "../../../"));
+            string builtInModulesDir = Path.GetFullPath(Path.Combine(pluginDir, "Intermediate", "Build", "Win64", "Mono", "BuiltinModules"));
+            string builtInModulesProj = Path.GetFullPath(Path.Combine(builtInModulesDir, "UnrealEngine.BuiltinModules" + ".csproj"));
+            string builtInModulesSln = Path.GetFullPath(Path.Combine(builtInModulesDir, "UnrealEngine.BuiltinModules" + ".sln"));
 
             if (!Directory.Exists(builtInModulesDir))
             {
@@ -631,19 +631,51 @@ namespace PluginInstaller
                 Console.WriteLine("Built In Modules C# Project doesn't exist, please generate modules in an Unreal Project.");
                 return;
             }
-
+            Console.WriteLine("Built In Modules Directory Found " + @"""" + builtInModulesDir + @"""");
+            Console.WriteLine("Built In Modules C# Project Found " + @"""" + builtInModulesProj + @"""" + "\n");
             string projectGUID;
+            Console.WriteLine("Patching BuiltInModules C# Project...");
             PatchBuiltInModulesProject(builtInModulesProj, out projectGUID);
             if (string.IsNullOrEmpty(projectGUID))
             {
                 Console.WriteLine("Couldn't Obtain Project GUID from BuildInModules C# Project");
                 return;
             }
-
+            Console.WriteLine("Patching BuiltInModules C# Project Complete \n");
             //Create Solution With Project GUID
-
+            Console.WriteLine("Creating Solution At " + @"""" + builtInModulesSln + @"""");
+            string projectName = Path.GetFileNameWithoutExtension(builtInModulesProj);
+            CreateSolutionFileFromProjectFile(builtInModulesSln, builtInModulesProj, projectName, new Guid(projectGUID));
+            Console.WriteLine("Solution Created. \n");
             //Attempt To Compile Project
+            Console.WriteLine("Attempting To Compile Built In Modules Project " + @"""" + builtInModulesProj + @"""");
+            string targetName = Path.GetFileName(builtInModulesProj);
+            if (!BuildCs(builtInModulesSln, builtInModulesProj, true, false, null))
+            {
+                Console.WriteLine("Failed to build (see build.log) - " + targetName);
+                return;
+            }
+            else
+            {
+                Console.WriteLine("Build successful - " + targetName);
+            }
+            Console.WriteLine("\n");
+            //Find Dlls In Appropriate Location
 
+        }
+
+        protected static bool CreateSolutionFileFromProjectFile(string slnPath, string projPath, string projName, Guid projectGuid)
+        {
+            try
+            {
+                CreateFileDirectoryIfNotExists(slnPath);
+                File.WriteAllLines(slnPath, GetSolutionContents(slnPath, projName, projPath, projectGuid));
+            }
+            catch
+            {
+                return false;
+            }
+            return true;
         }
 
         private static void PatchBuiltInModulesProject(string projPath, out string projectGUID)
@@ -771,6 +803,79 @@ namespace PluginInstaller
             if (projectContent.Count > 0)
             {
                 File.WriteAllLines(projPath, projectContent.ToArray());
+            }
+        }
+
+        protected static string[] GetSolutionContents(string slnPath, string projName, string projPath, Guid projectGuid)
+        {
+            string relativeProjPath = NormalizePath(MakePathRelativeTo(projPath, slnPath));
+
+            Guid projectTypeGuid = new Guid(@"FAE04EC0-301F-11D3-BF4B-00C04F79EFBC");// C# project type guid
+            Guid solutionGuid = Guid.NewGuid();
+            return new string[]
+            {
+                @"Microsoft Visual Studio Solution File, Format Version 12.00",
+                @"# Visual Studio 15",
+                @"VisualStudioVersion = 15.0.28010.2041",
+                @"MinimumVisualStudioVersion = 10.0.40219.1",
+                @"Project(""{" + GuidToString(projectTypeGuid) + @"}"") = """ + projName + @""", """ + relativeProjPath + @""", ""{" + GuidToString(projectGuid) + @"}""",
+                @"EndProject",
+                @"Global",
+                @"	GlobalSection(SolutionConfigurationPlatforms) = preSolution",
+                @"		Debug|Any CPU = Debug|Any CPU",
+                @"	EndGlobalSection",
+                @"	GlobalSection(ProjectConfigurationPlatforms) = postSolution",
+                @"		{" + GuidToString(projectGuid) + @"}.Debug|Any CPU.ActiveCfg = Debug|Any CPU",
+                @"		{" + GuidToString(projectGuid) + @"}.Debug|Any CPU.Build.0 = Debug|Any CPU",
+                @"	EndGlobalSection",
+                @"	GlobalSection(SolutionProperties) = preSolution",
+                @"		HideSolutionNode = FALSE",
+                @"	EndGlobalSection",
+                @"	GlobalSection(ExtensibilityGlobals) = postSolution",
+                @"		SolutionGuid = {" + GuidToString(solutionGuid) + @"}",
+                @"	EndGlobalSection",
+                @"EndGlobal"
+            };
+        }
+
+        /// <summary>
+        /// Assuming both paths (or filenames) are relative to the base dir, find the relative path to the InPath.
+        /// </summary>
+        /// <param name="inPath">Path to make this path relative to.</param>
+        /// <param name="inRelativeTo">Path relative to InPath</param>
+        /// <returns></returns>
+        public static string MakePathRelativeTo(string inPath, string inRelativeTo)
+        {
+            Uri directory = new Uri(inRelativeTo);
+            Uri filePath = new Uri(inPath);
+            return directory.MakeRelativeUri(filePath).OriginalString;
+        }
+
+        protected static string GuidToString(Guid guid)
+        {
+            return guid.ToString().ToUpper();
+        }
+
+        /// <summary>
+        /// Normalizes a file path to be used in a .sln/csproj ('\' must be used instead of '/')
+        /// </summary>
+        protected static string NormalizePath(string path)
+        {
+            return path.Replace('/', '\\');
+        }
+
+        protected static void CreateFileDirectoryIfNotExists(string path)
+        {
+            string directory = Path.GetDirectoryName(path);
+            try
+            {
+                if (!Directory.Exists(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+            }
+            catch
+            {
             }
         }
     }

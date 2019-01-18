@@ -58,7 +58,7 @@ namespace MonoUE.MSBuildSdkResolver
 
 				if (string.IsNullOrEmpty(engineDir))
 				{
-                    string installedLocationsInfo = ". Found: " + string.Join(", ", EnumerateEngineInstallations().ToList().Select(x => x.ID));
+                    string installedLocationsInfo = ". Found: " + string.Join(", ", EnumerateEngineInstallations(engineAssociation, string.Empty).ToList().Select(x => x.ID));
                     return factory.IndicateFailureAndLog(new[] { $"Could not find UE4 engine matching '{engineAssociation}' {installedLocationsInfo}"  });
 				}
 			}
@@ -139,7 +139,7 @@ namespace MonoUE.MSBuildSdkResolver
 		{
 			if (Guid.TryParse(engineID, out Guid engineGuid))
 			{
-				foreach (var installation in EnumerateEngineInstallations())
+                foreach (var installation in EnumerateEngineInstallations(engineID, engineGuid.ToString()))
 				{
 					if (Guid.TryParse(installation.ID, out Guid installationGuid) && installationGuid == engineGuid)
 					{
@@ -149,7 +149,7 @@ namespace MonoUE.MSBuildSdkResolver
 			}
 			else
 			{
-				foreach (var installation in EnumerateEngineInstallations())
+				foreach (var installation in EnumerateEngineInstallations(engineID, string.Empty))
 				{
 					if (string.Equals(installation.ID, engineID, StringComparison.OrdinalIgnoreCase))
 					{
@@ -165,11 +165,11 @@ namespace MonoUE.MSBuildSdkResolver
 			public string ID, Path;
 		}
 
-		static IEnumerable<EngineInstallation> EnumerateEngineInstallations()
+		static IEnumerable<EngineInstallation> EnumerateEngineInstallations(string engineID, string engineIDFromGUID)
 		{
 			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 			{
-				return EnumerateEngineInstallationsWindows();
+				return EnumerateEngineInstallationsWindows(engineID, engineIDFromGUID);
 			}
 			else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
 			{
@@ -181,7 +181,7 @@ namespace MonoUE.MSBuildSdkResolver
 			}
 		}
 
-        static IEnumerable<EngineInstallation> EnumerateEngineInstallationsWindows()
+        static IEnumerable<EngineInstallation> EnumerateEngineInstallationsWindows(string engineID, string engineIDFromGUID)
         {
             // TODO: read launcher installations using LauncherInstalled.dat
             // doesn't really matter until we support unpatched engines
@@ -194,10 +194,47 @@ namespace MonoUE.MSBuildSdkResolver
 					foreach (var valueID in buildsKey.GetValueNames())
 					{
 						var path = (string)buildsKey.GetValue(valueID);
-						yield return new EngineInstallation { ID = valueID, Path = path };
+                        if (!string.IsNullOrEmpty(path) && Directory.Exists(path))
+                        {
+                            yield return new EngineInstallation { ID = valueID, Path = path };
+                        }
 					}
 				}
 			}
+
+            string localSoftwareUEKeyString = @"SOFTWARE\EpicGames\Unreal Engine\";
+            using (var localkey64 = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
+            using (var localSoftwareUEKey = localkey64.OpenSubKey(localSoftwareUEKeyString))
+            {
+                if(localSoftwareUEKey != null)
+                {
+                    string[] subkeyNames = localSoftwareUEKey.GetSubKeyNames();
+                    //Used to get the UE4 installation path from the Local Machine Registry
+                    string ue4MajorVersion = string.Empty;
+                    foreach (string subKeyName in subkeyNames)
+                    {
+                        //If SubKey Is Equal To Engine ID, Or If ID From GUID Isn't Empty And SubKey Is Equal To It
+                        if(subKeyName == engineID || (!string.IsNullOrEmpty(engineIDFromGUID) && subKeyName == engineIDFromGUID))
+                        {
+                            ue4MajorVersion = subKeyName;
+                            break;
+                        }
+                    }
+                    //If Major UE4 Version is Found, Then Retrieve InstalledDirectory Key Value
+                    if (!string.IsNullOrEmpty(ue4MajorVersion))
+                    {
+                        using (var localSoftwareUEMajorInstallKey = localkey64.OpenSubKey(localSoftwareUEKeyString + ue4MajorVersion))
+                        {
+                            string valueName = "InstalledDirectory";
+                            var path = (string)localSoftwareUEMajorInstallKey.GetValue(valueName);
+                            if (!string.IsNullOrEmpty(path) && Directory.Exists(path))
+                            {
+                                yield return new EngineInstallation { ID = ue4MajorVersion, Path = path };
+                            }
+                        }
+                    }
+                }
+            }
 
             using (var hkcu64 = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
             using (var key = hkcu64.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"))
@@ -206,16 +243,16 @@ namespace MonoUE.MSBuildSdkResolver
                 {
                     using (RegistryKey subkey = key.OpenSubKey(subkeyName))
                     {
-                        string displayName = subkey.GetValue("DisplayName") as string;                        
-                        if(displayName == "Unreal Engine")
+                        string displayName = subkey.GetValue("DisplayName") as string;
+                        if (displayName == "Unreal Engine")
                         {
                             string installLocation = subkey.GetValue("InstallLocation") as string;
                             if (!string.IsNullOrEmpty(installLocation) && Directory.Exists(installLocation))
                             {
                                 DirectoryInfo directory = new DirectoryInfo(installLocation);
-                                foreach(DirectoryInfo engineVersion in directory.GetDirectories())
+                                foreach (DirectoryInfo engineVersion in directory.GetDirectories())
                                 {
-                                    if(Directory.Exists(Path.Combine(engineVersion.FullName, "Engine")) &&
+                                    if (Directory.Exists(Path.Combine(engineVersion.FullName, "Engine")) &&
                                        Directory.Exists(Path.Combine(engineVersion.FullName, "Templates")))
                                     {
                                         yield return new EngineInstallation { ID = engineVersion.Name, Path = engineVersion.FullName };
@@ -226,7 +263,7 @@ namespace MonoUE.MSBuildSdkResolver
                                         }
                                     }
                                 }
-                            }                            
+                            }
                         }
                     }
                 }

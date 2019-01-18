@@ -40,6 +40,7 @@
 /ThirdParty/mono/lib/**
 /ThirdParty/mono/include/**
 /ThirdParty/mono/fx/MonoUE/v1.0/*
+!/ThirdParty/mono/fx/MonoUE/v1.0/RedistList/
 !/ThirdParty/mono/fx/MonoUE/v1.0/RedistList/FrameworkList.xml
 
 # vim autosave files

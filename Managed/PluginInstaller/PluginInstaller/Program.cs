@@ -100,24 +100,9 @@ namespace PluginInstaller
                         Console.Clear();
                         break;
 
-                    case "build":
-                        CompileCs(args);
-                        CompileCpp(args);
-                        Console.WriteLine("done");
-                        break;
-
                     case "buildcs":
                         CompileCs(args);
                         Console.WriteLine("done");
-                        break;
-
-                    case "buildcustomsln":
-                        if(args.Length >= 3 && 
-                            !string.IsNullOrEmpty(args[1]) && File.Exists(args[1]) &&
-                            !string.IsNullOrEmpty(args[2]) && File.Exists(args[2]))
-                        {
-                            BuildCustomSolution(args[1], args[2]);
-                        }
                         break;
 
                     case "buildcpp":
@@ -126,41 +111,6 @@ namespace PluginInstaller
                             cppCompileTime.Start();
                             CompileCpp(args);
                             Console.WriteLine("done (" + cppCompileTime.Elapsed + ")");
-                        }
-                        break;
-
-                    case "copyruntime":
-                        if (args.Length >= 2)
-                        {
-                            bool minimal = args.Length >= 3 && args[2].ToLower() == "min";
-                            string configFile = NetRuntimeHelper.GetConfigFile(minimal);
-
-                            if (File.Exists(configFile))
-                            {
-                                switch (args[1].ToLower())
-                                {
-                                    case "all":
-                                        NetRuntimeHelper.CopyAll(minimal);
-                                        Console.WriteLine("done");
-                                        break;
-                                    case "mono":
-                                        NetRuntimeHelper.CopyMono(minimal);
-                                        Console.WriteLine("done");
-                                        break;
-                                    case "coreclr":
-                                        NetRuntimeHelper.CopyCoreCLR(minimal);
-                                        Console.WriteLine("done");
-                                        break;
-                                }
-                            }
-                            else
-                            {
-                                Console.WriteLine("Couldn't find '" +  configFile + "'");
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine("Invalid input. Expected one of the following: all, mono, coreclr");
                         }
                         break;
 
@@ -177,10 +127,10 @@ namespace PluginInstaller
         private static void PrintHelp()
         {
             Console.WriteLine("Available commands:");
-            Console.WriteLine("- build       builds C# and C++ projects");
+            //Console.WriteLine("- build       builds C# and C++ projects");
             Console.WriteLine("- buildcs     builds C# projects (Loader, AssemblyRewriter, Runtime)");
             Console.WriteLine("- buildcpp    builds C++ projects");
-            Console.WriteLine("- copyruntime [all] [mono] [coreclr] copies the given runtime(s) locally");
+            //Console.WriteLine("- copyruntime [all] [mono] [coreclr] copies the given runtime(s) locally");
         }
 
         private static string[] ParseArgs(string commandLine)
@@ -283,7 +233,7 @@ namespace PluginInstaller
 
         static string GetEnginePathFromCurrentFolder()
         {
-            // Check upwards for /Epic Games/ENGINE_VERSION/Engine/Plugins/USharp/ and extract the path from there
+            // Check upwards for /Epic Games/ENGINE_VERSION/Engine/Plugins/MonoUE/ and extract the path from there
             string[] parentFolders = { "Managed", "Binaries", "MonoUE", "Plugins", "Engine" };
             string currentPath = GetCurrentDirectory();
 
@@ -554,7 +504,7 @@ namespace PluginInstaller
 
             // In 4.20 if it detects that the plugin already exists our compilation will fail (even if we are compiling in-place!)
             // Therefore we need to rename the existing .uplugin file to have a different extension so that UBT doesn't complain.
-            // NOTE: For reference the build error is "Found 'USharp' plugin in two locations" ... "Plugin names must be unique."
+            // NOTE: For reference the build error is "Found 'MonoUE' plugin in two locations" ... "Plugin names must be unique."
             string existingPluginFile = Path.Combine(pluginDir, pluginName + pluginExtension);
             string tempExistingPluginFile = null;
             if (File.Exists(existingPluginFile))
@@ -658,19 +608,5 @@ namespace PluginInstaller
             }
         }
 
-        static bool BuildCustomSolution(string slnPath, string projPath)
-        {
-            Console.WriteLine("Attempting to build solution: " + slnPath);
-            bool buildcs = BuildCs(slnPath, projPath, true, false, null);
-            if(buildcs)
-            {
-                Console.WriteLine("Solution was compiled successfully");
-            }
-            else
-            {
-                Console.WriteLine("There was an issue with compiling the provided solution: " + slnPath);
-            }
-            return buildcs;
-        }
     }
 }

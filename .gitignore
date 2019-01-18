@@ -40,6 +40,7 @@
 /ThirdParty/mono/lib/**
 /ThirdParty/mono/include/**
 /ThirdParty/mono/fx/MonoUE/v1.0/*
+!/ThirdParty/mono/fx/MonoUE/v1.0/RedistList/
 !/ThirdParty/mono/fx/MonoUE/v1.0/RedistList/FrameworkList.xml
 
 # vim autosave files
@@ -57,3 +58,11 @@
 
 # Unignore VS extension bits
 !*.vsixmanifest
+
+# Ignore Template Content Files Automatically Generated
+Templates/TP_ThirdPersonMono/Content
+Templates/TP_ThirdPersonMono/Media
+Templates/TP_ThirdPersonMonoBP/Content
+Templates/TP_ThirdPersonMonoBP/Media
+# Ignore Visual Studio Database Folders
+.vs
